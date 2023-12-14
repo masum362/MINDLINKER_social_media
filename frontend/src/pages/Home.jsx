@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { TopBar, ProfileCard, FriendsCard, CustomBtn, TextInput, Loading, PostCard } from '../components/index';
+import { TopBar, ProfileCard, FriendsCard, CustomBtn, TextInput, Loading, PostCard, EditProfile } from '../components/index';
 import { suggest, requests, posts } from '../assets/data';
 import { Link } from 'react-router-dom';
 import { NoProfile } from '../assets/index';
@@ -9,7 +9,7 @@ import { BiImages, BiSolidVideo } from 'react-icons/bi';
 import { useForm } from 'react-hook-form';
 
 const Home = () => {
-  const { user } = useSelector((state) => state.user);
+  const { user,edit } = useSelector((state) => state.user);
   const [friendRequest, setFriendRequest] = useState(requests);
   const [suggestedFriends, setSuggestedFriends] = useState(suggest)
 
@@ -24,6 +24,7 @@ const Home = () => {
 
 
   return (
+    <>
     <div className='home w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden'>
       <TopBar />
       <div className=' w-full flex gap-2 lg:gap-4 pt-5 pb-10 h-full'>
@@ -171,6 +172,8 @@ const Home = () => {
         </div>
       </div>
     </div>
+    {edit && <EditProfile />}
+    </>
   )
 }
 
