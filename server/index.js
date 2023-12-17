@@ -18,14 +18,7 @@ dotenv.config();
 
 const app = express();
 app.use(express.static(path.join(__dirname, "views/build")));
-app.use((req, res, next) => {
-    if (req.url.startsWith("/users/static")) {
-      const newPath = req.url.replace("/users", "");
-      res.redirect(newPath);
-      return;
-    }
-    next();
-  });
+
 
 app.use(helmet());
 app.use(cors({origin:"*" , withCredentials:true}));

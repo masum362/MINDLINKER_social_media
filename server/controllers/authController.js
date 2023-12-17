@@ -1,5 +1,5 @@
 import Users from "../model/userSchema.js";
-import { sendVerificationEmail } from "../views/build/emailVerification.js";
+import { sendVerificationEmail } from "../utils/emailVerification.js";
 import { hashString, compareStrings, createJwtToken } from "../utils/index.js";
 
 const homePage = (req, res) => {

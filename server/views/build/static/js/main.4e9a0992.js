@@ -9694,7 +9694,7 @@
         v = u((0, e.useState)(null), 2),
         g = v[0],
         y = v[1],
-        b = "http://localhost:3000/login",
+        b = "http://localhost:5173/login",
         w = (function () {
           var e,
             t =
@@ -9726,10 +9726,11 @@
                             (e.prev = 8),
                             (e.next = 11),
                             fetch(
-                              "http://localhost:8800/users/reset-password",
+                              "http://localhost:3002/users/reset-password",
                               {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
+                                
                                 body: JSON.stringify({
                                   userId: s,
                                   password: n,
