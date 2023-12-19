@@ -6,15 +6,19 @@ const userAuth = async (req, res, next) => {
     next("Authentication Failed");
   }
 
-  const token = authHeader.split(" ")[1];
+  const token = authHeader?.split(" ")[1];
 
   try {
-    const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    if (!token) {
+      next("Invalid User!");
+    }else{
+      const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    req.body.user = {
-      userId: userToken.userId,
-    };
-    next();
+      req.body.user = {
+        userId: userToken.userId,
+      };
+      next();
+    }
   } catch (error) {
     console.log(error);
     next("Authentication failed");

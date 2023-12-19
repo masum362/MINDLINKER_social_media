@@ -4,6 +4,7 @@ import Verification from "../model/verificationSchema.js";
 import { compareStrings, createJwtToken, hashString } from "../utils/index.js";
 import passwordReset from "../model/resetPasswordSchema.js";
 import { resetPasswordLink } from "../utils/emailVerification.js";
+import FriendRequest from "../model/requestSchema.js";
 
 const verifyUser = async (req, res) => {
   const { userId, token } = req.params;
@@ -165,10 +166,11 @@ const changePassword = async (req, res) => {
   }
 };
 
-const getUser = async (req, res,next) => {
+const getUser = async (req, res, next) => {
   try {
     const { userId } = req.body.user;
     const { id } = req.params;
+    console.log(id);
 
     const user = await Users.findById(id ?? userId).populate({
       path: "friends",
@@ -197,43 +199,198 @@ const getUser = async (req, res,next) => {
   }
 };
 
+const updateUser = async (req, res, next) => {
+  try {
+    const { firstName, lastName, location, profileUrl, profession } = req.body;
 
-const updateUser = async (req, res,next) => {
-try{
-  const {firstName, lastName,location , profileUrl , profession} = req.body;
+    if (!(firstName || lastName || location || profileUrl || profession)) {
+      next("Please provide all required fields");
+      return;
+    }
+    const { userId } = req.body.user;
+    console.log(userId);
 
-  if(!(firstName || lastName || location || profileUrl || profession)){
-    next("Please provide all required fields");
-    return;
+    const updateUser = {
+      firstName,
+      lastName,
+      location,
+      profileUrl,
+      profession,
+      _id: userId,
+    };
+
+    const user = await Users.findByIdAndUpdate(userId, updateUser, {
+      new: true,
+    });
+
+    await user.populate({ path: "friends", select: "-password" });
+
+    const token = createJwtToken(user?._id);
+
+    user.password = undefined;
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      user,
+      token,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(404).json({ message: error.message });
   }
-  const {userId} = req.body.user;
+};
 
-  const updateUser = {
-    firstName , lastName , location , profileUrl,profession,
-    _id:userId
+const friendRequest = async (req, res, next) => {
+  try {
+    const { userId } = req.body.user;
+    const { requestTo } = req.body;
+
+    const requestExist = await FriendRequest.findOne({
+      requestFrom: userId,
+      requestTo,
+    });
+
+    if (requestExist) {
+      next("Friend Request already sent!");
+      return;
+    }
+
+    const newRes = await FriendRequest.create({
+      requestTo,
+      requestFrom: userId,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Friend request sent successfully",
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(404).json({ message: error.message });
   }
+};
 
-  const user= await Users.findOneAndUpdate(userId , updateUser,{
-    new:true
-  });
+const getFriendRequest = async (req, res, next) => {
+  try {
+    const { userId } = req.body.user;
 
-  await user.populate({path:"friends",select:"-password"})
+    const request = await FriendRequest.find({
+      requestTo: userId,
+      requestStatus: "pending",
+    })
+      .populate({
+        path: "requestFrom",
+        select: "firstName lastName  profileUrl  profession  -password",
+      })
+      .limit(10)
+      .sort({ _id: -1 });
 
-  const token = createJwtToken(user?._id)
+    res.status(200).json({
+      success: true,
+      data: request,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res
+      .status(500)
+      .json({ message: "Auth error", success: false, error: error.message });
+  }
+};
 
-  user.password = undefined;
-  res.status(200).json({
-    success: true,
-    message:"User updated successfully",
-    user,
-    token
-  })
+const acceptRequest = async (req, res, next) => {
+  try {
+    const id = req.body.user.userId;
+    const { rid, status } = req.body;
+    const requestExist = await FriendRequest.findById(rid);
 
-}catch (error) {
-  console.log(error.message);
-  return res.status(404).json({ message: error.message });
-}
-   
+    if (!requestExist) {
+      next("No friend request found.");
+      return;
+    } else {
+      const newRes = await FriendRequest.findByIdAndUpdate(
+        { _id: rid },
+        { requestStatus: status }
+      );
+
+      if (status === "accepted") {
+        const user = await Users.findById(id);
+        user.friends.push(newRes?.requestFrom);
+        await user.save();
+
+        const friend = await Users.findById(newRes?.requestFrom);
+        friend.friends.push(newRes?.requestTo);
+        await friend.save();
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "friend request " + status,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Auth error", success: false, error: error.message });
+  }
+};
+
+const profileViews = async (req, res, next) => {
+  try {
+    const { userId } = req.body.user;
+    const { id } = req.body;
+    console.log(id);
+
+    const user = await Users.findById(id);
+
+    const isViewed = user?.views?.filter((view) => view === userId);
+
+    if (isViewed.length > 0) {
+      res.status(201).json({
+        success: false,
+        message: "Alredy viewed",
+      });
+    } else {
+      user.views.push(userId);
+      await user.save();
+      res.status(201).json({
+        success: true,
+        message: "successfully viewed",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Auth error", success: false, error: error.message });
+  }
+};
+
+const suggestedFriends = async (req, res, next) => {
+  try {
+    const { userId } = req.body.user;
+
+    let queryObject = {};
+
+    queryObject._id = { $ne: userId };
+    queryObject.friends = { $nin: userId };
+
+    let queryResult = Users.find(queryObject)
+      .limit(15)
+      .select("firstName lastName profileUrl profession -password");
+
+    const suggestedFriends = await queryResult;
+
+    res.status(200).json({
+      success: true,
+      data: suggestedFriends,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Auth error", success: false, error: error.message });
+  }
 };
 
 export {
@@ -243,4 +400,9 @@ export {
   changePassword,
   getUser,
   updateUser,
+  friendRequest,
+  getFriendRequest,
+  acceptRequest,
+  profileViews,
+  suggestedFriends,
 };
