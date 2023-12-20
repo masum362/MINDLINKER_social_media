@@ -8,7 +8,7 @@ import passwordReset from "../model/resetPasswordSchema.js";
 
 dotenv.config();
 
-const { AUTH_EMAIL, AUTH_PASSWORD, APP_URL,APP_HOST } = process.env;
+const { AUTH_EMAIL, AUTH_PASSWORD, APP_URL, APP_HOST } = process.env;
 
 const transporter = nodemailer.createTransport({
   host: APP_HOST,
@@ -45,7 +45,7 @@ export const sendVerificationEmail = async (user, res) => {
     </p>
     <div style="margin-top: 20px;">
         <h5>Best Regards</h5>
-        <h5>ShareFun Team</h5>
+        <h5>MindLinker Team</h5>
     </div>
 </div>`,
   };
@@ -61,9 +61,9 @@ export const sendVerificationEmail = async (user, res) => {
 
     if (newVerifiedEmail) {
       res.status(201).json({
-            success: "PENDING",
-            message:"Verified email"
-          })
+        success: "PENDING",
+        message: "Verified email",
+      });
       // transporter.sendMail(mailOptions).then(() => {
       //   res.status(201).json({
       //     success: "PENDING",
@@ -78,7 +78,7 @@ export const sendVerificationEmail = async (user, res) => {
   }
 };
 
-export const resetPasswordLink =async (user, res) => {
+export const resetPasswordLink = async (user, res) => {
   const { _id, email } = user;
   const token = _id + uuid4();
 
@@ -101,23 +101,25 @@ export const resetPasswordLink =async (user, res) => {
   try {
     const hashedToken = await hashString(token);
     const resetEmail = await passwordReset.create({
-        userId:_id ,
-        email:email,
-        token : hashedToken,
-        createdAt:Date.now(),
-        expiresAt:Date.now() + 600000
-    })
-    if(resetEmail){
-        transporter.sendMail(mailOptions).then(() => {
-             res.status(201).json({
-              success: "PENDING",
-              message:
-                "Reset password email has been sent to your account.",
-            })
-          }).catch(error => {
-            console.log(error);
-            res.status(404).json({message:"something went wrong!"});
-          })
+      userId: _id,
+      email: email,
+      token: hashedToken,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 600000,
+    });
+    if (resetEmail) {
+      transporter
+        .sendMail(mailOptions)
+        .then(() => {
+          res.status(201).json({
+            success: "PENDING",
+            message: "Reset password email has been sent to your account.",
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(404).json({ message: "something went wrong!" });
+        });
     }
   } catch (error) {
     console.log(error.message);

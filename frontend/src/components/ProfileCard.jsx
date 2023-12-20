@@ -12,7 +12,7 @@ import moment from 'moment';
 
 const ProfileCard = ({ user }) => {
 
-  const { user: data, edit } = useSelector(state => state.user);
+  const { user: data, edit } = useSelector(state => state.user?.user);
   const dispatch = useDispatch();
 
 
@@ -27,7 +27,7 @@ const ProfileCard = ({ user }) => {
             />
             <div className=' flex flex-col justify-center '>
               <p className='text-lg font-medium text-ascent-1'>
-                {user?.firstName}{user?.lastName}
+                {user?.firstName} {user?.lastName}
               </p>
               <span className='text-ascent-2'>{user?.profession ?? "No Profession"}</span>
 

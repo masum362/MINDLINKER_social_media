@@ -203,6 +203,8 @@ const updateUser = async (req, res, next) => {
   try {
     const { firstName, lastName, location, profileUrl, profession } = req.body;
 
+    console.log( { firstName, lastName, location, profileUrl, profession })
+
     if (!(firstName || lastName || location || profileUrl || profession)) {
       next("Please provide all required fields");
       return;

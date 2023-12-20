@@ -9,7 +9,7 @@ import { BiImages, BiSolidVideo } from 'react-icons/bi';
 import { useForm } from 'react-hook-form';
 
 const Home = () => {
-  const { user,edit } = useSelector((state) => state.user);
+  const { user:{user},edit } = useSelector((state) => state.user);
   const [friendRequest, setFriendRequest] = useState(requests);
   const [suggestedFriends, setSuggestedFriends] = useState(suggest)
 
@@ -22,7 +22,9 @@ const Home = () => {
 
   }
 
+  console.log(edit)
 
+  console.log({user})
   return (
     <>
     <div className='home w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden'>

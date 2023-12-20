@@ -15,7 +15,7 @@ import { SiConvertio } from "react-icons/si";
 
 const TopBar = () => {
     const { theme } = useSelector(state => state.theme);
-    const { user } = useSelector(state => state.user);
+    const { user:{user} } = useSelector(state => state.user);
     const dispatch = useDispatch();
 
     const { register, handleSubmit, formState: { errors } } = useForm();

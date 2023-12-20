@@ -7,10 +7,12 @@ import { posts } from '../assets/data';
 const Profile = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { user } = useSelector(state => state.user)
+  const { user:{user} } = useSelector(state => state.user)
   const [userInfo, setUserInfo] = useState(user);
   // const { posts } = useSelector(state => state.post);
   const [loading, setLoading] = useState(false);
+
+  console.log(user)
 
 const handleDelete = () => {};
 const handleLikePost = () => {};

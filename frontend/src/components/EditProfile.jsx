@@ -1,30 +1,72 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { MdClose } from 'react-icons/md';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { CustomBtn, Loading, TextInput } from './index'
 import { dispatch } from '../redux/store';
-import { updateUser } from '../redux/userSlice';
+import { loginUser, updateUser } from '../redux/userSlice';
+import { CommonFileUpload, CommonPutUrl } from '../utils/api';
 
 
 const EditProfile = () => {
-  const { user } = useSelector((state) => state.user);
+  const { user:{user}} = useSelector((state) => state.user);
 
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [errMsg, setErrMsg] = useState('null');
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false)
+  const dispatch = useDispatch();
+  
+   useEffect(() => {
+    console.log(file)
+   }, [file])
+   
 
-  const onSubmit = async (data) => { }
+  const onSubmit = async (data) => {
+    data.profileUrl = file;
+    console.log(data)
+
+    try {
+     const result =  await CommonPutUrl("users/update-user",data);
+     dispatch(loginUser(result.data))
+     dispatch(updateUser(false))
+    } catch (error) {
+      console.log(error)
+    }
+   }
 
   const handleClose = () => {
     dispatch(updateUser(false));
    }
 
-  const handleSelect = (e) => {
-    setFile(e.target.files[0])
-   }
+  const handleSelect =async (e) => {
 
+    const formData = new FormData();
+    formData.append('image', e.target.files[0]);
+
+try {
+  setLoading(true);
+  const result = await CommonFileUpload(formData)
+  setFile(result);
+setLoading(false)
+} catch (error) {
+  console.log(error)
+}
+
+  //   const Api = "https://api.imgbb.com/1/upload?expiration=63072000&key=7dfd97eb382b65ec8ec1a88ce98dfab1";
+  //   await axios.post(Api, formData).then((res) => {
+  //     console.log(res)
+  //     const url = res.data.data.url;
+  //     console.log({ url })
+  //     setFile(url);
+  //   })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+
+  //  }
+
+  }
 
 
   return (
@@ -61,7 +103,7 @@ const EditProfile = () => {
               </div>
               <form
                 className=' px-4 sm:px-6 flex flex-col gap-3 2xl:gap-6'
-                onSubmit={handleSubmit(onsubmit)}
+                onSubmit={handleSubmit(onSubmit)}
               >
 
                 <TextInput
