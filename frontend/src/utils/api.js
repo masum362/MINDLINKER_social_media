@@ -5,7 +5,7 @@ const token = JSON.parse(localStorage.getItem('user'))?.token ?? '';
 
 console.log(token)
 
-const CommonPostUrl = async(url , data , token) => {
+const CommonPostUrl = async(url , data) => {
     try {
         const response = await axios.post(`${APP_URL}/${url}`, data, {
             headers: {
