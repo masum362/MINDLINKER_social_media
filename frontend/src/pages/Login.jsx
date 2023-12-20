@@ -2,12 +2,18 @@ import React, { useRef, useState } from 'react'
 import { SiConvertio } from "react-icons/si";
 import { TextInput, Loading, CustomBtn } from '../components/index';
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { BgImage } from '../assets/index'
 import { BsShare } from 'react-icons/bs'
 import { ImConnection } from 'react-icons/im'
 import { AiOutlineInteraction } from 'react-icons/ai'
+import { CommonPostUrl } from '../utils/api';
+import { loginUser } from '../redux/userSlice';
+
+
+
+
 const Login = () => {
   const inputRef = useRef()
   const dispatch = useDispatch()
@@ -15,11 +21,25 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm({ mode: "onChange" });
-  
-  console.log(errors)
+
+  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
-    
+    setIsSubmitting(true);
+    try {
+      const result = await CommonPostUrl('auth/login', data)
+      console.log(result.data);
+      setErrMsg(result.data);
+      dispatch(loginUser(result.data))
+      setIsSubmitting(false);
+      setTimeout(() => {
+        navigate('/')
+      }, 2000);
+    } catch (error) {
+      console.log(error)
+      setIsSubmitting(false);
+
+    }
   };
 
 
@@ -56,15 +76,6 @@ const Login = () => {
               type={"password"}
               register={register("password", {
                 required: "Password is required",
-                minLength: {
-                  value: 8,
-                  message: "Must be at least 8 characters"
-                },
-                pattern: {
-                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                  message: "Enter a strong password"
-
-                },
               })}
               styles={"w-full rounded-full"}
               labelStyles={'ml-2'}
