@@ -60,13 +60,17 @@ export const sendVerificationEmail = async (user, res) => {
     });
 
     if (newVerifiedEmail) {
-      transporter.sendMail(mailOptions).then(() => {
-        res.status(201).json({
-          success: "PENDING",
-          message:
-            "Verification email has been sent to your account.Check your email for further instructions.",
-        });
-      });
+      res.status(201).json({
+            success: "PENDING",
+            message:"Verified email"
+          })
+      // transporter.sendMail(mailOptions).then(() => {
+      //   res.status(201).json({
+      //     success: "PENDING",
+      //     message:
+      //       "Verification email has been sent to your account.Check your email for further instructions.",
+      //   });
+      // });
     }
   } catch (error) {
     console.log(error.message);

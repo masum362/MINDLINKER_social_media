@@ -1,6 +1,6 @@
 // Error Middleware | Next function
 
-const errorMiddleware = ( err , req, res , nex) => {
+const errorMiddleware = ( err , req, res , next) => {
     const defaultError = {
         statusCode : 404,
         sucess:"Falied",

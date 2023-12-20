@@ -2,21 +2,49 @@ import React, { useRef, useState } from 'react'
 import { SiConvertio } from "react-icons/si";
 import { TextInput, Loading, CustomBtn } from '../components/index';
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { BgImage } from '../assets/index'
 import { BsShare, BsTerminalX } from 'react-icons/bs'
 import { ImConnection } from 'react-icons/im'
 import { AiOutlineInteraction } from 'react-icons/ai'
+import axios from 'axios';
+import { CommonPostUrl } from '../utils/api';
+
+
+
 const Register = () => {
-  const { register, handleSubmit,getValues, formState: { errors } } = useForm({ mode: "onChange" });
+  const { register, handleSubmit, getValues, formState: { errors } } = useForm({ mode: "onChange" });
   const formshook = useForm();
   const inputRef = useRef()
 
   const [errMsg, setErrMsg] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch()
-  const onSubmit =async(data) => console.log(data);
+
+  const navigate = useNavigate();
+
+
+
+  const registerSubmit = async (data) => {
+    setIsSubmitting(true);
+    try {
+      const result = await CommonPostUrl('auth/register', data)
+      console.log(result);
+      setErrMsg({ status: "sucess", message: "Registration Successfully!" });
+      setIsSubmitting(false);
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+      
+    } catch (error) {
+      console.error(error);
+      setErrMsg({ status: "failed", message: "Somwething Went Wrong!" });
+      setIsSubmitting(false)
+    }
+
+  }
+
 
 
   return (
@@ -31,31 +59,31 @@ const Register = () => {
             <span className='text-2xl text-[#065ad8] font-semibold' >MindLinker</span>
           </div>
           <p className='text-ascent-1 text-base font-semibold'>Register Your Account</p>
-          <form className='py-8 mt-2 text-ascent-2 flex flex-col gap-5' onSubmit={handleSubmit(onSubmit)}>
-            
+          <form className='py-8 mt-2 text-ascent-2 flex flex-col gap-5' onSubmit={handleSubmit(registerSubmit)}>
+
             <div className='w-full flex flex-col lg:flex-row gap-1 md:gap-2'>
-            <TextInput
-            name={'firstName'}
-            label={'First Name'}
-            placeholder={'First Name'}
-            type={'text'}
-            styles={'w-full '}
-            register={register("firstName",{
-              required:"First Name is required",
-            })}
-            error={errors.firstName ? errors.firstName?.message : ""}
-            />
-            <TextInput
-            name={'lastName'}
-            label={'Last Name'}
-            placeholder={'Last Name'}
-            type={'text'}
-            styles={'w-full '}
-            register={register("lastName",{
-              required:"Last Name is required",
-            })}
-            error={errors.lastName ? errors.lastName?.message : ""}
-            />
+              <TextInput
+                name={'firstName'}
+                label={'First Name'}
+                placeholder={'First Name'}
+                type={'text'}
+                styles={'w-full '}
+                register={register("firstName", {
+                  required: "First Name is required",
+                })}
+                error={errors.firstName ? errors.firstName?.message : ""}
+              />
+              <TextInput
+                name={'lastName'}
+                label={'Last Name'}
+                placeholder={'Last Name'}
+                type={'text'}
+                styles={'w-full '}
+                register={register("lastName", {
+                  required: "Last Name is required",
+                })}
+                error={errors.lastName ? errors.lastName?.message : ""}
+              />
             </div>
 
             <TextInput
@@ -70,47 +98,42 @@ const Register = () => {
               error={errors.email ? errors.email.message : ""}
             />
 
-<div className='w-full flex flex-col lg:flex-row gap-1 md:gap-2'> 
+            <div className='w-full flex flex-col lg:flex-row gap-1 md:gap-2'>
 
-            <TextInput
-              name={"password"}
-              placeholder={'**********'}
-              label={"Password"}
-              type={"password"}
-              register={register("password", {
-                required: "Password is required",
-                pattern:{
-                  value:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                  message:"Enter a strong password"
+              <TextInput
+                name={"password"}
+                placeholder={'**********'}
+                label={"Password"}
+                type={"password"}
+                register={register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 6,
+                    message: "Must be at least 6 characters"
+                  },
 
-                },
-                minLength:{
-                  value:8,
-                  message:"Must be at least 8 characters"
-                },
-                
-              })}
-              styles={"w-full"}
-              error={errors.password ? errors.password.message : ""}
-            />
-            <TextInput
-              name={"confirmPassword"}
-              placeholder={'**********'}
-              label={"Confirm Password"}
-              type={"password"}
-              register={register("cpassword", {
-                validate:(value) => {
-                  const {password} = getValues();
-                  if(password != value){
-                    return "Password not matched";
-                  }
-                },
-              })}
-              styles={"w-full"}
-              error={errors.cpassword && errors.cpassword.type==="validate"  ? errors.cpassword.message :  " " }
-            />
+                })}
+                styles={"w-full"}
+                error={errors.password ? errors.password.message : ""}
+              />
+              <TextInput
+                name={"confirmPassword"}
+                placeholder={'**********'}
+                label={"Confirm Password"}
+                type={"password"}
+                register={register("cpassword", {
+                  validate: (value) => {
+                    const { password } = getValues();
+                    if (password != value) {
+                      return "Password not matched";
+                    }
+                  },
+                })}
+                styles={"w-full"}
+                error={errors.cpassword && errors.cpassword.type === "validate" ? errors.cpassword.message : " "}
+              />
 
-</div>
+            </div>
 
             {
               errMsg.message && <span className={`text-sm ${errMsg?.status == "failed" ? "text-[#f64949fe]" : 'text-[#2ba150fe]'} mt-0.5`}>

@@ -16,12 +16,17 @@ const __dirname = path.resolve(path.dirname(''))
 console.log(__dirname)
 dotenv.config();
 
+const corsOptions = {
+    origin:process.env.NODE_ENV === ' production' ? '' : 'http://localhost:5173',
+    creadential:true
+}
+
 const app = express();
 app.use(express.static(path.join(__dirname, "views/build")));
 
 
 app.use(helmet());
-app.use(cors({origin:"*" , withCredentials:true}));
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.json({limit:"10mb"}))

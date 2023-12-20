@@ -1,4 +1,5 @@
 import Users from "../model/userSchema.js";
+import Verification from "../model/verificationSchema.js";
 import { sendVerificationEmail } from "../utils/emailVerification.js";
 import { hashString, compareStrings, createJwtToken } from "../utils/index.js";
 
@@ -6,7 +7,13 @@ const homePage = (req, res) => {
   console.log("homepage called");
 };
 const register = async (req, res, next) => {
+
+  // await Users.deleteMany({})
+  // await Verification.deleteMany({})
+
   const { firstName, lastName, email, password } = req.body;
+
+console.log({ firstName, lastName, email, password } )
 
   if (!(firstName, lastName, email, password)) {
     next("Field Value required!");
@@ -29,7 +36,7 @@ const register = async (req, res, next) => {
       });
 
       // send verification email
-      sendVerificationEmail(user, res);
+      await sendVerificationEmail(user, res);
     }
   } catch (error) {
     console.log(error);

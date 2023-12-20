@@ -9,5 +9,6 @@ router.use('/auth',authRoute);
 router.use('/users',userRoute);
 router.use('/posts',postRoute);
 
+
 export default router;
 
