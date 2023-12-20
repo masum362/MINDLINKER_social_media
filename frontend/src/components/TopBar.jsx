@@ -13,16 +13,14 @@ import { SiConvertio } from "react-icons/si";
 
 
 
-const TopBar = () => {
+const TopBar = ({handleSearch}) => {
     const { theme } = useSelector(state => state.theme);
     const { user:{user} } = useSelector(state => state.user);
     const dispatch = useDispatch();
 
     const { register, handleSubmit, formState: { errors } } = useForm();
 
-    const onSubmit = (data) => {
-        console.log(data);
-    }
+ 
 
     const handleTheme = () => {
         const themeValue = theme === 'light' ? 'dark' : 'light';
@@ -38,11 +36,12 @@ const TopBar = () => {
                 </div>
                 <span className=' text-xl md:text-2xl text-[#065ad8] font-semibold '>MindLinker</span>
             </Link>
-            <form className=' hidden md:flex items-center justify-center' onSubmit={handleSubmit(onSubmit)}>
+            <form className=' hidden md:flex items-center justify-center' onSubmit={handleSubmit(handleSearch)}>
                 <TextInput
                     placeholder={"Search..."}
                     styles='w-[18rem] lg:w-[38rem] rounded-l-full py-3'
                     register={register('search')}
+                    
                 />
                 <CustomBtn
                     title={'Search'}

@@ -1,66 +1,101 @@
 import React, { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { TopBar, ProfileCard, FriendsCard, CustomBtn, TextInput, Loading, PostCard, EditProfile } from '../components/index';
-import { suggest, requests, posts } from '../assets/data';
+import { suggest, requests } from '../assets/data';
 import { Link } from 'react-router-dom';
 import { NoProfile } from '../assets/index';
 import { BsFiletypeGif, BsPersonFillAdd } from 'react-icons/bs';
 import { BiImages, BiSolidVideo } from 'react-icons/bi';
 import { useForm } from 'react-hook-form';
-import { CommonFileUpload, CommonPostUrl } from '../utils/api';
+import { CommonFileUpload, CommonGetUrl, CommonPostUrl } from '../utils/api';
+import { getPosts } from '../redux/postSlice';
 
 const Home = () => {
   const { user: { user }, edit } = useSelector((state) => state.user);
+  const { posts } = useSelector((state) => state.post);
   const [friendRequest, setFriendRequest] = useState(requests);
   const [suggestedFriends, setSuggestedFriends] = useState(suggest)
-
-  const { register, handleSubmit, formState: { errors },reset } = useForm();
   const [errMsg, setErrMsg] = useState('null');
   const [file, setFile] = useState(null);
+  const [search, setSearch] = useState({})
   const [posting, setPosting] = useState(false);
   const [loading, setLoading] = useState(false)
+  const dispatch = useDispatch();
+  const { register, handleSubmit, formState: { errors, isSubmitSuccessful }, reset } = useForm({
+    defaultValues:
+    {
+      "description": "",
+      image: ""
+    },
+  });
 
   useEffect(() => {
-    console.log(file)
-  }, [file])
-
+    getAllPosts();
+    setTimeout(() => {
+      setErrMsg("")
+    }, 2000);
+  }, [file, errMsg,search])
 
 
 
   const handlePost = async (data) => {
+    setPosting(true);
     data.image = file
+
     try {
       const result = await CommonPostUrl('posts/create-post', data)
-      console.log(result);
-      reset({...data});
-      
+      setErrMsg(result.data);
+      reset({
+        description: "",
+        image: ""
+      });
+      setPosting(false);
     } catch (error) {
       console.log(error)
+      setPosting(false);
     }
   }
 
   const handleImageUpload = async (e) => {
     const formData = new FormData();
+    console.log(e.target.files[0])
     formData.append("image", e.target.files[0]);
-
+    setPosting(true)
     try {
       const result = await CommonFileUpload(formData)
       console.log(result);
       setFile(result);
+      setPosting(false);
     } catch (error) {
       console.log(error);
     }
-
-
   }
 
-  console.log(edit)
 
-  console.log({ user })
+  const getAllPosts = async () => {
+   
+    setLoading(true);
+    
+    try {
+      const result = await CommonPostUrl('posts/', search && search )
+      dispatch(getPosts(result.data.data));
+      setLoading(false);
+      
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const handleSearch = async (data) => {
+    setSearch(data);
+  }
+
+  console.log({ posts, search })
+
   return (
     <>
       <div className='home w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden'>
-        <TopBar />
+        <TopBar handleSearch={handleSearch} />
         <div className=' w-full flex gap-2 lg:gap-4 pt-5 pb-10 h-full'>
           {/* left */}
           <div className=' hidden w-1/3 lg:w-1/4 h-full md:flex flex-col gap-6 overflow-y-auto'>
@@ -79,7 +114,7 @@ const Home = () => {
                   register={register('description', {
                     required: "Write something about yourself"
                   })}
-                  error={errors?.description ? errors?.description.message : ""}
+                  error={errors?.description ? errors?.description?.message : ""}
                 />
               </div>
               {

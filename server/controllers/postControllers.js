@@ -8,6 +8,8 @@ const createPost = async (req, res, next) => {
 
     const { description, image } = req.body;
 
+    console.log({description, image})
+
     if (!description) {
       next("Please provide a description");
       return;
@@ -30,10 +32,13 @@ const createPost = async (req, res, next) => {
 };
 
 const getPosts = async (req, res, next) => {
+  console.log("calling")
   try {
     const { userId } = req.body.user;
 
     const { search } = req.body;
+
+    console.log(search)
 
     const user = await Users.findById(userId);
     const friends = user?.friends?.toString().split(",") ?? [];
