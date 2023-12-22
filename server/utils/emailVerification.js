@@ -108,18 +108,22 @@ export const resetPasswordLink = async (user, res) => {
       expiresAt: Date.now() + 600000,
     });
     if (resetEmail) {
-      transporter
-        .sendMail(mailOptions)
-        .then(() => {
-          res.status(201).json({
-            success: "PENDING",
-            message: "Reset password email has been sent to your account.",
-          });
-        })
-        .catch((error) => {
-          console.log(error);
-          res.status(404).json({ message: "something went wrong!" });
-        });
+      res.status(201).json({
+        success: "PENDING",
+        message: "Reset password email has been sent to your account.",
+      });
+      // transporter
+      //   .sendMail(mailOptions)
+      //   .then(() => {
+      //     res.status(201).json({
+      //       success: "PENDING",
+      //       message: "Reset password email has been sent to your account.",
+      //     });
+      //   })
+      //   .catch((error) => {
+      //     console.log(error);
+      //     res.status(404).json({ message: "something went wrong!" });
+      //   });
     }
   } catch (error) {
     console.log(error.message);

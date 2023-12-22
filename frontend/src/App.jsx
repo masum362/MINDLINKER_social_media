@@ -7,15 +7,15 @@ import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 
 export const Layout = () => {
-  const {user} = useSelector(state => state.user)
-  const location  = useLocation();
+  const { user } = useSelector(state => state.user)
+  const location = useLocation();
 
-  
-console.log({user});
+
+  console.log({ user });
   return (
-<>
-{user?.token ? <Outlet /> : <Navigate to={'/login'} state={{from:location}} replace />}
-</>
+    <>
+      {user?.token ? <Outlet /> : <Navigate to={'/login'} state={{ from: location }} replace />}
+    </>
   )
 }
 
@@ -24,21 +24,21 @@ console.log({user});
 
 
 function App() {
-  const {theme} = useSelector(state => state.theme)
-  
- 
+  const { theme } = useSelector(state => state.theme)
+
+
   return (
     <div data-theme={theme} className="w-full min-h-[100vh]">
       <Routes>
-      <Route path='/' element={<Layout />}>
-        <Route path='' element={<Home />} />
-        <Route path='/profile/:id?' element={<Profile />} />
-      </Route>
-      <Route path='/register' element={<Register />} />
-      <Route path='/login' element={<Login />} />
-      <Route path='/reset-password' element={<ResetPassword />} />
+        <Route path='/' element={<Layout />}>
+          <Route path='' element={<Home />} />
+          <Route path='/profile/:id?' element={<Profile />} />
+        </Route>
+        <Route path='/register' element={<Register />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
       </Routes>
-   
+
     </div>
   )
 }

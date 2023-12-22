@@ -106,6 +106,7 @@ const getSinglePost = async (req, res, next) => {
 const getUserPost = async (req, res, next) => {
   try {
     const { id } = req.params;
+    console.log({id})
 
     const post = await Posts.find({ userId: id })
       .populate({
@@ -137,8 +138,7 @@ const getComments = async (req, res, next) => {
       .populate({
         path: "replies.userId",
         select: "firstName lastName location profileUrl -password",
-      });
-
+      }).sort('-createdAt')
     res.status(200).json({
       success: true,
       message: " successfully",
@@ -331,8 +331,10 @@ const deletePost = async (req, res , next) => {
     const {id} = req.params;
     const {userId} = req.body.user;
 
-    const result = await Posts.findByIdAndDelete(id);
+    console.log({id})
 
+    const result = await Posts.findByIdAndDelete(id);
+console.log(result)
     res.status(200).json({success:true, message:"Successfully deleted"})
   } catch (error) {
     console.log(error);

@@ -6,12 +6,18 @@ import { CustomBtn, Loading, TextInput } from './index'
 import { dispatch } from '../redux/store';
 import { loginUser, updateUser } from '../redux/userSlice';
 import { CommonFileUpload, CommonPutUrl } from '../utils/api';
+const token = JSON.parse(localStorage.getItem('user'))?.token ?? '';
 
 
 const EditProfile = () => {
   const { user:{user}} = useSelector((state) => state.user);
 
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, formState: { errors ,isSubmitSuccessful},value } = useForm();
+
+
+  console.log({value})
+
+
   const [errMsg, setErrMsg] = useState('null');
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false)
@@ -23,12 +29,10 @@ const EditProfile = () => {
    
 
   const onSubmit = async (data) => {
-    data.profileUrl = file;
-    console.log(data)
-
+    data.profileUrl = file ? file : data.profileUrl;
     try {
      const result =  await CommonPutUrl("users/update-user",data);
-     dispatch(loginUser(result.data))
+     dispatch(loginUser({token:result.data.token,...result.data.user}))
      dispatch(updateUser(false))
     } catch (error) {
       console.log(error)
@@ -53,19 +57,6 @@ setLoading(false)
   console.log(error)
 }
 
-  //   const Api = "https://api.imgbb.com/1/upload?expiration=63072000&key=7dfd97eb382b65ec8ec1a88ce98dfab1";
-  //   await axios.post(Api, formData).then((res) => {
-  //     console.log(res)
-  //     const url = res.data.data.url;
-  //     console.log({ url })
-  //     setFile(url);
-  //   })
-  //     .catch((err) => {
-  //       console.log(err);
-  //     });
-
-  //  }
-
   }
 
 
@@ -75,7 +66,7 @@ setLoading(false)
       <div className='fixed z-50 inset-0 overflow-y-auto '>
         <div className=' flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0'>
           <div className=' fixed inset-0  transition-opacity'>
-            <div className=' absolute inset-0 bg-[#000] opacity-70'>
+            <div className=' absolute inset-0 bg-[#000] opacity-70' >
 
             </div>
             <span className=' hidden sm:inline-block sm:align-middle sm:h-screen'>

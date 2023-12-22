@@ -1,20 +1,46 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { NoProfile } from '../assets/index';
 import { updateUser } from '../redux/userSlice'
 
 import { LiaEditSolid } from 'react-icons/lia'
 import { BsBriefcase, BsFacebook, BsInstagram, BsPersonFillAdd } from 'react-icons/bs';
-import {FaTwitterSquare} from 'react-icons/fa'
+import { FaTwitterSquare } from 'react-icons/fa'
 import { CiLocationOn } from 'react-icons/ci'
 import moment from 'moment';
+import EditProfile from './EditProfile';
+import { CommonPostUrl } from '../utils/api';
 
 const ProfileCard = ({ user }) => {
 
-  const { user: data, edit } = useSelector(state => state.user?.user);
+  const { user: data } = useSelector(state => state.user);
   const dispatch = useDispatch();
+  
+    const params = useParams();
 
+  const [isFriend , setIsFriend] = useState(data.friends?.filter((item) => item._id === params?.id)
+)
+
+  useEffect(() => {
+    console.log(isFriend?.length)
+  }, [isFriend])
+  
+
+  const handleFriendReq = async (requestTo) => {
+    try {
+      const response = await CommonPostUrl('users/friend-request', { requestTo })
+      console.log(response.data);
+      setIsFriend([response.data])
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+
+ 
+  console.log({ isFriend })
 
   return (
     <div>
@@ -44,9 +70,12 @@ const ProfileCard = ({ user }) => {
                 onClick={() => dispatch(updateUser(true))}
               />
             ) : (
-              <button className=' bg-[#0444a430] text-sm text-white p-1 rounded ' onClick={() => { }}>
-                <BsPersonFillAdd size={20} className='text-[#0f52b6]' />
-              </button>
+              isFriend?.length  > 0 ?
+                "" :
+                (
+                  <button className=' bg-[#0444a430] text-sm text-white p-1 rounded ' onClick={() => { }}>
+                    <BsPersonFillAdd size={20} className='text-[#0f52b6]' onClick={() => handleFriendReq(user?._id)} />
+                  </button>)
             )}
           </div>
         </div>

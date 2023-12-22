@@ -9,7 +9,7 @@ router.post('/create-post',userAuth,createPost);
 
 // get posts
 router.post('/' , userAuth, getPosts);
-router.get('/:id' , userAuth, getSinglePost);
+// router.get('/:id' , userAuth, getSinglePost);
 router.get('/get-user-post/:id' , userAuth , getUserPost);
 
 // get comments
@@ -22,6 +22,6 @@ router.post('/comment/:id',userAuth, commentPost)
 router.post('/reply-comment/:id',userAuth, replyComments)
 
 // delete post
-router.delete('/:id',userAuth,deletePost)
+router.delete('/delete/post/:id',userAuth,deletePost)
 
 export default router;

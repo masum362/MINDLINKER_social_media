@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { NoProfile } from '../assets/index';
 import moment from 'moment';
 import { BiComment, BiLike, BiSolidLike } from 'react-icons/bi';
 import { MdOutlineDeleteOutline } from 'react-icons/md'
 import { useForm } from 'react-hook-form'
 import { CustomBtn, Loading, TextInput } from './index';
-import { postComments } from '../assets/data';
+import { postComments, posts } from '../assets/data';
+import { CommonGetUrl, CommonPostUrl } from '../utils/api';
+import { commentPost } from '../../../server/controllers/postControllers';
 
-const ReplyCard = ({ reply, user, handleLike }) => {
+const ReplyCard = ({ reply, user, handleLike ,commentId}) => {
+
+    
     return (
         <div className=' w-full py-3'>
             <div className=' flex gap-3 items-center mb-1 '>
@@ -28,20 +32,20 @@ const ReplyCard = ({ reply, user, handleLike }) => {
 
 
             <div className=' ml-12 '>
-        <p className=' text-ascent-2'>{reply?.comment}</p>
-        <div className=" mt-2 flex gap-6">
-            <p
-            className=' flex gap-2 items-center text-base text-ascent-2 cursor-pointer'
-            onClick={handleLike}
-            >
-                {reply?.likes?.includes(user?._id)? (
-                    <BiSolidLike size={20} />
-                ):(
-                    <BiLike size={20} />
-                )}
-                {reply?.likes?.length} Likes
-            </p>
-        </div>
+                <p className=' text-ascent-2'>{reply?.comment}</p>
+                <div className=" mt-2 flex gap-6">
+                    <p
+                        className=' flex gap-2 items-center text-base text-ascent-2 cursor-pointer'
+                        onClick={() =>handleLike(commentId,reply?._id)}
+                    >
+                        {reply?.likes?.includes(user?._id) ? (
+                            <BiSolidLike size={20} color='blue' />
+                        ) : (
+                            <BiLike size={20} />
+                        )}
+                        {reply?.likes?.length} Likes
+                    </p>
+                </div>
             </div>
         </div>
     )
@@ -50,12 +54,34 @@ const ReplyCard = ({ reply, user, handleLike }) => {
 const CommentForm = ({ user, replyAt, id, getComments }) => {
     const [loading, setLoading] = useState(false);
     const [errMsg, setErrMsg] = useState("");
-    const { register, handleSubmit, formState: { errors } } = useForm({ mode: "onChange" });
+    const { register, handleSubmit, formState: { errors }, reset } = useForm({ mode: "onChange", defaultValues: { comment: "", from: "" } });
 
-    const onSubmit = async (data) => { }
+
+
+    const handleComment = async (data) => {
+        setLoading(true)
+        data.from = user.firstName + " " + user.lastName
+        data.replyAt = replyAt
+        try {
+            if (replyAt) {
+                const response = await CommonPostUrl(`posts/reply-comment/${id}`, data)
+                await getComments(id)
+                setLoading(false)
+            } else {
+                const response = await CommonPostUrl(`posts/comment/${id}`, data)
+                reset({ comment: "", from: "" })
+                await getComments(id);
+                setLoading(false)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+
 
     return (
-        <form onSubmit={handleSubmit(onsubmit)} className=' w-full border-b border-[#66666645] '>
+        <form onSubmit={handleSubmit(handleComment)} className=' w-full border-b border-[#66666645] '>
             <div className=' w-full flex items-center gap-2 py-4 '>
                 <img src={user?.profileUrl ?? NoProfile} alt="user Image" className=' w-10 h-10 rounded-full object-cover' />
 
@@ -66,7 +92,7 @@ const CommentForm = ({ user, replyAt, id, getComments }) => {
                     register={register('comment', {
                         required: "Comment can not be empty",
                     })}
-                    error={errors.comment ? errors.comment.message : ""} />
+                    error={errors.comment ? errors.comment?.message : ""} />
 
             </div>
             {
@@ -97,16 +123,41 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
     const [replyComments, setReplyComments] = useState(0);
     const [showComments, setShowComments] = useState(0);
 
-    const getComments = async () => {
-        setReplyComments(0)
-        setComments(postComments)
-        setLoading(false);
 
+
+    const getComments = async (id) => {
+        setReplyComments(0)
+        setLoading(true)
+        try {
+            const response = await CommonGetUrl(`posts/comments/${id}`)
+            setComments(response.data.data)
+            setLoading(false)
+        } catch (error) {
+            console.log(error);
+        }
+        setLoading(false);
     };
 
-    const handleLike = () => {
+    const handleCommentLike = async (id) => {
+        try {
+            const response = await CommonPostUrl(`posts/like-comment/${id}`)
+            await getComments(post?._id)
+        } catch (error) {
+            console.log(error)
 
+        }
     }
+    const handleLike = async (commentId , replyid) => {
+        console.log({commentId,replyid})
+        try {
+            const response = await CommonPostUrl(`posts/like-comment/${commentId}/${replyid}`)
+            await getComments(post?._id)
+        } catch (error) {
+            console.log(error)
+
+        }
+    }
+
 
     return (
         <div className=' mb-2 bg-primary p-4 rounded-xl '>
@@ -118,7 +169,7 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
                 <div className=' w-full flex justify-between'>
                     <div className=''>
                         <Link to={'/profile/' + post?.userId?._id}>
-                            <p className=' font-medium text-lg text-ascent-2'>{post?.userId?.firstName}{post?.userId?.lastName}</p>
+                            <p className=' font-medium text-lg text-ascent-2'>{post?.userId?.firstName} {post?.userId?.lastName}</p>
                         </Link>
                         <span className=' text-ascent-2'>{post?.userId?.location}</span>
                     </div>
@@ -141,10 +192,10 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
             <div className=' mt-4 flex justify-between items-center px-3 py-2 text-ascent-2 text-base border-t border-[#66666645]'>
                 <p className=' flex gap-2 items-center text-base cursor-pointer'>
                     {post?.likes?.includes(user?._id) ? (
-                        <BiSolidLike size={20} color='blue' />
+                        <BiSolidLike size={20} color='blue' onClick={() => likePost(user?._id, post?._id)} />
 
                     ) : (
-                        <BiLike size={20} />
+                        <BiLike size={20} onClick={() => likePost(user?._id, post?._id)} />
                     )}
                     {post?.likes?.length}Likes
                 </p>
@@ -171,7 +222,7 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
             </div>
             {/* comments */}
             {showComments === post?._id && <div className=' w-full mt-4 border-t border-[#66666645] pt-4 '>
-                <CommentForm user={user} id={post?._id} getComments={() => getComments(post?._id)} />
+                <CommentForm user={user} id={post?._id} getComments={getComments} />
 
                 {loading ? (<Loading />) : (
 
@@ -199,7 +250,7 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
                                     <div className='ml-12'>
                                         <p className='text-ascent-2'>{comment?.comment}</p>
                                         <div className=' mt-2 flex gap-6'>
-                                            <p className=' flex gap-2 items-center text-base text-ascent-2 cursor-pointer'>
+                                            <p className=' flex gap-2 items-center text-base text-ascent-2 cursor-pointer' onClick={(() => { handleCommentLike(user?.id) })}>
                                                 {" "}
                                                 {comment?.likes?.includes(user?._id) ? (
                                                     <BiSolidLike size={20} color='blue' />
@@ -222,26 +273,24 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
                                         )}
                                     </div>
                                     <div className='py-2 px-8 mt-6'>
-                                    {console.log(showReply)}
                                         {comment?.replies?.length > 0 && (
                                             <p className='text-base text-ascent-1 cursor-pointer'
-                                       
+
                                                 onClick={() => setShowReply(showReply === comment?.replies?._id ? 0 : comment?.replies?._id)}>
                                                 Show Replies ({comment?.replies?.length})
                                             </p>
                                         )}
-                                      
+
                                         {showReply === comment?.replies?._id && (
                                             comment?.replies.map((reply) => (
-                                            <ReplyCard 
-                                            reply={reply} 
-                                            user={user} 
-                                            key={reply?._id}
-                                            handleLike={() => {
-                                                handleLike('/posts/like-comment' + comment?._id + "/" + reply?._id)
-                                                    }}
+                                                <ReplyCard
+                                                    commentId={comment?._id}
+                                                    reply={reply}
+                                                    user={user}
+                                                    key={reply?._id}
+                                                    handleLike={handleLike}
                                                 />
-                                                )
+                                            )
                                             )
                                         )}
                                     </div>

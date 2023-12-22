@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { TopBar, ProfileCard, FriendsCard, CustomBtn, TextInput, Loading, PostCard, EditProfile } from '../components/index';
-import { suggest, requests } from '../assets/data';
 import { Link } from 'react-router-dom';
 import { NoProfile } from '../assets/index';
 import { BsFiletypeGif, BsPersonFillAdd } from 'react-icons/bs';
 import { BiImages, BiSolidVideo } from 'react-icons/bi';
 import { useForm } from 'react-hook-form';
-import { CommonFileUpload, CommonGetUrl, CommonPostUrl } from '../utils/api';
+import { CommonDeleteUrl, CommonFileUpload, CommonGetUrl, CommonPostUrl } from '../utils/api';
 import { getPosts } from '../redux/postSlice';
+import { loginUser } from '../redux/userSlice';
 
 const Home = () => {
-  const { user: { user }, edit } = useSelector((state) => state.user);
+  const { user, edit } = useSelector((state) => state.user);
   const { posts } = useSelector((state) => state.post);
-  const [friendRequest, setFriendRequest] = useState(requests);
-  const [suggestedFriends, setSuggestedFriends] = useState(suggest)
-  const [errMsg, setErrMsg] = useState('null');
+  const [friendRequest, setFriendRequest] = useState([]);
+  const [suggestedFriends, setSuggestedFriends] = useState([])
+  const [errMsg, setErrMsg] = useState('');
   const [file, setFile] = useState(null);
   const [search, setSearch] = useState({})
   const [posting, setPosting] = useState(false);
@@ -24,19 +24,41 @@ const Home = () => {
   const { register, handleSubmit, formState: { errors, isSubmitSuccessful }, reset } = useForm({
     defaultValues:
     {
-      "description": "",
+      description: "",
       image: ""
     },
   });
 
+  console.log(user, edit)
+
   useEffect(() => {
+    getFriendRequest();
+    getSuggestedFriend();
     getAllPosts();
     setTimeout(() => {
       setErrMsg("")
     }, 2000);
-  }, [file, errMsg,search])
+    getUser();
+  }, [file, search, errMsg])
 
 
+
+
+
+  const getUser = async () => {
+    try {
+      const response = await CommonGetUrl(`users/get-user/${user._id}`)
+      console.log(response.data)
+      if (response.data.success === true) {
+        const token = JSON.parse(localStorage.getItem('user'))?.token ?? '';
+        dispatch(loginUser({ token: token, ...response.data.user }))
+        await getFriendRequest();
+        await getSuggestedFriend();
+      }
+    } catch (error) {
+
+    }
+  }
 
   const handlePost = async (data) => {
     setPosting(true);
@@ -49,10 +71,12 @@ const Home = () => {
         description: "",
         image: ""
       });
+      await getAllPosts();
       setPosting(false);
     } catch (error) {
-      console.log(error)
+      setErrMsg(error);
       setPosting(false);
+
     }
   }
 
@@ -63,26 +87,25 @@ const Home = () => {
     setPosting(true)
     try {
       const result = await CommonFileUpload(formData)
-      console.log(result);
       setFile(result);
       setPosting(false);
     } catch (error) {
-      console.log(error);
+      setErrMsg(error)
     }
   }
 
 
   const getAllPosts = async () => {
-   
+
     setLoading(true);
-    
+
     try {
-      const result = await CommonPostUrl('posts/', search && search )
+      const result = await CommonPostUrl('posts/', search && search)
       dispatch(getPosts(result.data.data));
       setLoading(false);
-      
+
     } catch (error) {
-      console.log(error);
+      setErrMsg(error)
     }
   }
 
@@ -90,7 +113,77 @@ const Home = () => {
     setSearch(data);
   }
 
-  console.log({ posts, search })
+  const likePost = async (userid, postid) => {
+    try {
+      const response = await CommonPostUrl(`posts/like/${postid}`)
+      console.log(response.data.data)
+      getAllPosts();
+    } catch (error) {
+      setErrMsg(error)
+    }
+  }
+
+  const deletePost = async (postid) => {
+    try {
+      const response = await CommonDeleteUrl(`posts/delete/post/${postid}`)
+      console.log(response.data)
+      getAllPosts();
+      setErrMsg(response.data);
+    } catch (error) {
+      setErrMsg(error)
+    }
+  }
+
+
+  const getFriendRequest = async () => {
+    try {
+      const response = await CommonGetUrl('users/get-friend-request')
+      console.log(response.data.data)
+      setFriendRequest(response.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+
+
+
+
+  const getSuggestedFriend = async () => {
+    try {
+      const response = await CommonGetUrl('users/suggest-friends')
+      setSuggestedFriends(response.data.data);
+      console.log(response.data.data)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const handleFriendReq = async (requestTo) => {
+    try {
+      const response = await CommonPostUrl('users/friend-request', { requestTo })
+      await getSuggestedFriend();
+      console.log(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+  const acceptFriend = async (id, status) => {
+    const obj = { rid: id, status }
+    console.log(obj)
+    try {
+      const response = await CommonPostUrl('users/accept-request', obj)
+      if (response.data.success === true) {
+        getUser();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
 
   return (
     <>
@@ -157,7 +250,7 @@ const Home = () => {
               loading ? <Loading /> : posts.length > 0 ? (
                 posts?.map(post => {
                   return (
-                    <PostCard key={posts?._id} post={post} user={user} deletePost={() => { }} likePost={() => { }} />
+                    <PostCard key={posts?._id} post={post} user={user} deletePost={deletePost} likePost={likePost} />
                   )
                 })
               ) : (
@@ -181,10 +274,10 @@ const Home = () => {
 
                   return (
                     <div key={_id} className=' flex items-center justify-between '>
-                      <Link to={'/profile/' + user._id} className=' w-full flex gap-4 items-center cursor-pointer'>
+                      <Link to={'/profile/' + user?._id} className=' w-full flex gap-4 items-center cursor-pointer'>
                         <img src={user?.profileUrl ?? NoProfile} alt={user?.firstName} className=' w-10 h-10 object-cover rounded-full' />
                         <div className=' flex-1'>
-                          <p className=' text-base font-medium text-ascent-1'>{user?.firstName}{user?.lastName}</p>
+                          <p className=' text-base font-medium text-ascent-1'>{user?.firstName} {user?.lastName}</p>
                           <span className=' text-sm text-ascent-2'>{user?.profession ?? "No Profession"}</span>
 
 
@@ -194,11 +287,13 @@ const Home = () => {
                       <div className=' flex gap-1 '>
                         <CustomBtn
                           title={"Accept"}
+                          onClick={() => acceptFriend(_id, 'accepted')}
                           containerStyles={'bg-[#0444a4] text-xs text-white px-1.5 py-1 rounded-full'}
 
                         />
                         <CustomBtn
                           title={"Delete"}
+                          onClick={() => acceptFriend(_id, 'denied')}
                           containerStyles={'border border-[#666] text-xs text-ascent-1 px-1.5 py-1 rounded-full'}
 
                         />
@@ -222,13 +317,13 @@ const Home = () => {
                       <Link to={'/profile/' + friend?._id} className=' w-full flex items-center cursor-pointer gap-4'>
                         <img src={friend?.profileUrl ?? NoProfile} alt={friend?.firstName} className=' w-10 h-10 object-cover rounded-full' />
                         <div className=' flex-1 '>
-                          <p className=' text-base font-medium text-ascent-1'>{friend?.firstName}{friend?.lastName}</p>
+                          <p className=' text-base font-medium text-ascent-1'>{friend?.firstName} {friend?.lastName}</p>
                           <span className=' text-sm text-ascent-2'>{friend?.profession ?? "No Profession"}</span>
 
                         </div>
                       </Link>
                       <div className=' flex gap-1'>
-                        <button className=' bg-[#0444a430] text-sm text-white p-1 rounded' onClick={() => { }}>
+                        <button className=' bg-[#0444a430] text-sm text-white p-1 rounded' onClick={() => handleFriendReq(friend?._id)}>
                           <BsPersonFillAdd size={20} className='text-[#0f52b6]' />
                         </button>
                       </div>

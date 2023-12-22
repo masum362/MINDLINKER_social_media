@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { CustomBtn, Loading, TextInput } from '../components/index';
+import { CommonPostUrl } from '../utils/api';
 
 const ResetPassword = () => {
 
@@ -12,7 +13,16 @@ const ResetPassword = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm({ mode: "onChange" });
 
-  const onSubmit = async (data) => console.log(data);
+  const onSubmit = async (data) => {
+    try {
+      const response = await CommonPostUrl('users/request-passwordreset',data)
+
+      console.log(response)
+    } catch (error) {
+      console.log(error);
+    }
+
+  }
 
 
 

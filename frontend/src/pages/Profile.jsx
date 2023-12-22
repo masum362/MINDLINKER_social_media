@@ -1,21 +1,60 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom'
-import { FriendsCard, Loading, PostCard, ProfileCard, TopBar } from '../components/index';
-import { posts } from '../assets/data';
+import { EditProfile, FriendsCard, Loading, PostCard, ProfileCard, TopBar } from '../components/index';
+import { CommonGetUrl, CommonPostUrl } from '../utils/api';
 
 const Profile = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { user:{user} } = useSelector(state => state.user)
+  const { user: { user }, edit } = useSelector(state => state.user)
   const [userInfo, setUserInfo] = useState(user);
-  // const { posts } = useSelector(state => state.post);
+  // const allpost = useSelector(state => state.post.posts);
+  const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(false);
 
-  console.log(user)
+  const params = useParams();
 
-const handleDelete = () => {};
-const handleLikePost = () => {};
+  console.log(params.id)
+
+  useEffect(() => {
+    getProfileUser();
+    getPostUser();
+    getProfileViews();
+  }, [params.id])
+
+  const getProfileUser = async () => {
+    try {
+      const response = await CommonGetUrl(`users/get-user/${params.id}`)
+      setUserInfo(response.data.user)
+    } catch (error) {
+
+    }
+  }
+  const getPostUser = async () => {
+    try {
+      const response = await CommonGetUrl(`posts/get-user-post/${params.id}`)
+      setPosts(response.data.data)
+    } catch (error) {
+
+    }
+  }
+
+  const getProfileViews = async () => {
+    const {id} = params
+    try {
+      const response = await CommonPostUrl('users/profile-view',{id})
+      console.log(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  console.log({posts})
+  // console.log({ user })
+
+  const handleDelete = () => { };
+  const handleLikePost = () => { };
 
   return (
     <>
@@ -55,9 +94,10 @@ const handleLikePost = () => {};
           <div className='hidden w-1/4 h-full lg:flex flex-col gap-8 overflow-y-auto'>
             <FriendsCard friends={userInfo?.friends} />
           </div>
-          
+
         </div>
       </div>
+      {edit && <EditProfile />}
     </>
   )
 }

@@ -23,9 +23,9 @@ const CommonPostUrl = async(url , data) => {
 }
 
 
-const CommonGetUrl = async(url , data ) => {
+const CommonGetUrl = async(url  ) => {
     try {
-        const response = await axios.get(`${APP_URL}/${url}`, data, {
+        const response = await axios.get(`${APP_URL}/${url}`, {
             headers: {
                 "Content-Type": "application/json",
                 'Authorization': `Bearer ${token ? token : ""}`
@@ -56,11 +56,11 @@ const CommonPutUrl = async(url , data ) => {
     }
 }
 
-const CommonDeleteUrl = async(url , data ) => {
+const CommonDeleteUrl = async(url) => {
     try {
-        const response = await axios.delete(`${APP_URL}/${url}`, data, {
+        const response = await axios.delete(`${APP_URL}/${url}`, {
             headers: {
-                "Content-Type": "application/json",
+                // "Content-Type": "application/json",
                 'Authorization': `Bearer ${token ? token : ""}`
             }
         });

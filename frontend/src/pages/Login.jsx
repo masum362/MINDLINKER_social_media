@@ -29,14 +29,17 @@ const Login = () => {
     try {
       const result = await CommonPostUrl('auth/login', data)
       console.log(result.data);
-      setErrMsg(result.data);
-      dispatch(loginUser(result.data))
+      setErrMsg({ success: 'success', message: "User login successfully" });
+      const newResponse = { token: result.data?.token, ...result.data?.user }
+      console.log({ newResponse })
+      dispatch(loginUser(newResponse))
       setIsSubmitting(false);
       setTimeout(() => {
         navigate('/')
       }, 2000);
     } catch (error) {
       console.log(error)
+      setErrMsg({ status: 'failed', message: "Something went wrong!" })
       setIsSubmitting(false);
 
     }
