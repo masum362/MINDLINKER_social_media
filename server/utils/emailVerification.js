@@ -11,7 +11,10 @@ dotenv.config();
 const { AUTH_EMAIL, AUTH_PASSWORD, APP_URL, APP_HOST } = process.env;
 
 const transporter = nodemailer.createTransport({
+  service:'gogle',
   host: APP_HOST,
+  port: 465,
+  secure:true,
   auth: {
     user: AUTH_EMAIL,
     pass: AUTH_PASSWORD,
@@ -60,17 +63,17 @@ export const sendVerificationEmail = async (user, res) => {
     });
 
     if (newVerifiedEmail) {
-      res.status(201).json({
-        success: "PENDING",
-        message: "Verified email",
-      });
-      // transporter.sendMail(mailOptions).then(() => {
-      //   res.status(201).json({
-      //     success: "PENDING",
-      //     message:
-      //       "Verification email has been sent to your account.Check your email for further instructions.",
-      //   });
+      // res.status(201).json({
+      //   success: "PENDING",
+      //   message: "Verified email",
       // });
+      transporter.sendMail(mailOptions).then(() => {
+        res.status(201).json({
+          success: "PENDING",
+          message:
+            "Verification email has been sent to your account.Check your email for further instructions.",
+        });
+      });
     }
   } catch (error) {
     console.log(error.message);
@@ -108,22 +111,22 @@ export const resetPasswordLink = async (user, res) => {
       expiresAt: Date.now() + 600000,
     });
     if (resetEmail) {
-      res.status(201).json({
-        success: "PENDING",
-        message: "Reset password email has been sent to your account.",
-      });
-      // transporter
-      //   .sendMail(mailOptions)
-      //   .then(() => {
-      //     res.status(201).json({
-      //       success: "PENDING",
-      //       message: "Reset password email has been sent to your account.",
-      //     });
-      //   })
-      //   .catch((error) => {
-      //     console.log(error);
-      //     res.status(404).json({ message: "something went wrong!" });
-      //   });
+      // res.status(201).json({
+      //   success: "PENDING",
+      //   message: "Reset password email has been sent to your account.",
+      // });
+      transporter
+        .sendMail(mailOptions)
+        .then(() => {
+          res.status(201).json({
+            success: "PENDING",
+            message: "Reset password email has been sent to your account.",
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(404).json({ message: "something went wrong!" });
+        });
     }
   } catch (error) {
     console.log(error.message);

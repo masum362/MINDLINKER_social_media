@@ -15,8 +15,10 @@ const ResetPassword = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await CommonPostUrl('users/request-passwordreset',data)
-
+      const response = await CommonPostUrl('users/request-passwordreset', data)
+      if (response.data.success !== 'failed') {
+        setErrMsg({ success: 'success', message: response.data.message })
+      }
       console.log(response)
     } catch (error) {
       console.log(error);
