@@ -23,8 +23,11 @@
 - backup system
 - profile customization
 - friends make
+- suggested friends
 - like
 - comment
+- reply
+- search
 - delete
 
 
