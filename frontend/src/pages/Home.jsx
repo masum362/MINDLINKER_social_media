@@ -17,7 +17,6 @@ const Home = () => {
   const [suggestedFriends, setSuggestedFriends] = useState([])
   const [errMsg, setErrMsg] = useState('');
   const [file, setFile] = useState(null);
-  const [search, setSearch] = useState({})
   const [posting, setPosting] = useState(false);
   const [loading, setLoading] = useState(false)
   const dispatch = useDispatch();
@@ -32,6 +31,7 @@ const Home = () => {
   console.log(user, edit)
 
   useEffect(() => {
+    setLoading(true);
     getFriendRequest();
     getSuggestedFriend();
     getAllPosts();
@@ -39,7 +39,7 @@ const Home = () => {
       setErrMsg("")
     }, 2000);
     getUser();
-  }, [file, search, errMsg])
+  }, [file, errMsg])
 
 
 
@@ -48,12 +48,10 @@ const Home = () => {
   const getUser = async () => {
     try {
       const response = await CommonGetUrl(`users/get-user/${user._id}`)
-      console.log(response.data)
       if (response.data.success === true) {
-        const token = JSON.parse(localStorage.getItem('user'))?.token ?? '';
-        dispatch(loginUser({ token: token, ...response.data.user }))
-        await getFriendRequest();
-        await getSuggestedFriend();
+        dispatch(loginUser({ token: user?.token, ...response.data.user }))
+        getFriendRequest();
+        getSuggestedFriend();
       }
     } catch (error) {
 
@@ -63,7 +61,6 @@ const Home = () => {
   const handlePost = async (data) => {
     setPosting(true);
     data.image = file
-
     try {
       const result = await CommonPostUrl('posts/create-post', data)
       setErrMsg(result.data);
@@ -82,9 +79,8 @@ const Home = () => {
 
   const handleImageUpload = async (e) => {
     const formData = new FormData();
-    console.log(e.target.files[0])
     formData.append("image", e.target.files[0]);
-    setPosting(true)
+    setPosting(true);
     try {
       const result = await CommonFileUpload(formData)
       setFile(result);
@@ -96,27 +92,19 @@ const Home = () => {
 
 
   const getAllPosts = async () => {
-
-    setLoading(true);
-
     try {
-      const result = await CommonPostUrl('posts/', search && search)
+      const result = await CommonPostUrl('posts/',)
       dispatch(getPosts(result.data.data));
       setLoading(false);
-
     } catch (error) {
       setErrMsg(error)
     }
   }
 
-  const handleSearch = async (data) => {
-    setSearch(data);
-  }
 
-  const likePost = async (userid, postid) => {
+  const likePost = async (uri) => {
     try {
-      const response = await CommonPostUrl(`posts/like/${postid}`)
-      console.log(response.data.data)
+      const response = await CommonPostUrl(uri)
       getAllPosts();
     } catch (error) {
       setErrMsg(error)
@@ -126,7 +114,6 @@ const Home = () => {
   const deletePost = async (postid) => {
     try {
       const response = await CommonDeleteUrl(`posts/delete/post/${postid}`)
-      console.log(response.data)
       getAllPosts();
       setErrMsg(response.data);
     } catch (error) {
@@ -138,23 +125,16 @@ const Home = () => {
   const getFriendRequest = async () => {
     try {
       const response = await CommonGetUrl('users/get-friend-request')
-      console.log(response.data.data)
       setFriendRequest(response.data.data);
     } catch (error) {
       console.log(error);
     }
   }
 
-
-
-
-
-
   const getSuggestedFriend = async () => {
     try {
       const response = await CommonGetUrl('users/suggest-friends')
       setSuggestedFriends(response.data.data);
-      console.log(response.data.data)
     } catch (error) {
       console.log(error);
     }
@@ -163,8 +143,7 @@ const Home = () => {
   const handleFriendReq = async (requestTo) => {
     try {
       const response = await CommonPostUrl('users/friend-request', { requestTo })
-      await getSuggestedFriend();
-      console.log(response.data);
+      getSuggestedFriend();
     } catch (error) {
       console.log(error);
     }
@@ -173,7 +152,6 @@ const Home = () => {
 
   const acceptFriend = async (id, status) => {
     const obj = { rid: id, status }
-    console.log(obj)
     try {
       const response = await CommonPostUrl('users/accept-request', obj)
       if (response.data.success === true) {
@@ -188,7 +166,7 @@ const Home = () => {
   return (
     <>
       <div className='home w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden'>
-        <TopBar handleSearch={handleSearch} />
+        <TopBar />
         <div className=' w-full flex gap-2 lg:gap-4 pt-5 pb-10 h-full'>
           {/* left */}
           <div className=' hidden w-1/3 lg:w-1/4 h-full md:flex flex-col gap-6 overflow-y-auto'>

@@ -16,16 +16,16 @@ const ProfileCard = ({ user }) => {
 
   const { user: data } = useSelector(state => state.user);
   const dispatch = useDispatch();
-  
-    const params = useParams();
 
-  const [isFriend , setIsFriend] = useState(data.friends?.filter((item) => item._id === params?.id)
-)
+  const params = useParams();
+
+  const [isFriend, setIsFriend] = useState(data.friends?.filter((item) => item._id === params?.id)
+  )
 
   useEffect(() => {
     console.log(isFriend?.length)
   }, [isFriend])
-  
+
 
   const handleFriendReq = async (requestTo) => {
     try {
@@ -39,7 +39,7 @@ const ProfileCard = ({ user }) => {
 
 
 
- 
+
   console.log({ isFriend })
 
   return (
@@ -70,7 +70,7 @@ const ProfileCard = ({ user }) => {
                 onClick={() => dispatch(updateUser(true))}
               />
             ) : (
-              isFriend?.length  > 0 ?
+              isFriend?.length > 0 ?
                 "" :
                 (
                   <button className=' bg-[#0444a430] text-sm text-white p-1 rounded ' onClick={() => { }}>
@@ -92,11 +92,11 @@ const ProfileCard = ({ user }) => {
         <div className='w-full flex flex-col gap-2 border-b py-4 border-[#66666645]'>
           <p className='text-xl text-ascent-1 font-semibold'>{user?.friends?.length} Friends</p>
 
-          <div className=' flex items-center justify-between'>
+          {user?._id === data?._id && <div className=' flex items-center justify-between'>
             <span className='text-ascent-2'>Who viewed your profile</span>
             <span className=' text-ascent-1 text-lg'>{user?.views?.length}</span>
 
-          </div>
+          </div>}
 
           <span className=' text-base text-blue'>{user?.verified ? "Verified Account" : "Not Verified"}</span>
 

@@ -10,9 +10,11 @@ const token = JSON.parse(localStorage.getItem('user'))?.token ?? '';
 
 
 const EditProfile = () => {
-  const { user:{user}} = useSelector((state) => state.user);
+  const { user} = useSelector((state) => state.user);
 
-  const { register, handleSubmit, formState: { errors ,isSubmitSuccessful},value } = useForm();
+  const { register, handleSubmit, formState: { errors ,isSubmitSuccessful},value } = useForm({
+    defaultValues:{...user}
+  });
 
 
   console.log({value})
@@ -24,9 +26,10 @@ const EditProfile = () => {
   const dispatch = useDispatch();
   
    useEffect(() => {
-    console.log(file)
+    console.log({user})
    }, [file])
    
+
 
   const onSubmit = async (data) => {
     data.profileUrl = file ? file : data.profileUrl;

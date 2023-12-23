@@ -8,12 +8,14 @@ import { TextInput, CustomBtn } from './index'
 import { setTheme } from '../redux/themeSlice'
 import { logout } from '../redux/userSlice'
 import { SiConvertio } from "react-icons/si";
+import { CommonPostUrl } from '../utils/api'
+import { getPosts } from '../redux/postSlice'
 
 
 
 
 
-const TopBar = ({handleSearch}) => {
+const TopBar = () => {
     const { theme } = useSelector(state => state.theme);
     const { user:{user} } = useSelector(state => state.user);
     const dispatch = useDispatch();
@@ -27,7 +29,14 @@ const TopBar = ({handleSearch}) => {
         dispatch(setTheme(themeValue));
     }
 
-
+ const handleSearch = async (data ) => {
+    try {
+        const response = await CommonPostUrl('posts/',data)
+        dispatch(getPosts(response.data.data))
+    } catch (error) {
+        
+    }
+ }
     return (
         <div className=' topbar w-full flex items-center justify-between py-3 md:py-6 px-4 bg-primary'>
             <Link to={'/'} className=' flex gap-2 items-center '>

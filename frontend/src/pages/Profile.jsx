@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom'
 import { EditProfile, FriendsCard, Loading, PostCard, ProfileCard, TopBar } from '../components/index';
-import { CommonGetUrl, CommonPostUrl } from '../utils/api';
+import { CommonDeleteUrl, CommonGetUrl, CommonPostUrl } from '../utils/api';
 
 const Profile = () => {
   const { id } = useParams();
@@ -18,6 +18,7 @@ const Profile = () => {
   console.log(params.id)
 
   useEffect(() => {
+    setLoading(true);
     getProfileUser();
     getPostUser();
     getProfileViews();
@@ -31,30 +32,50 @@ const Profile = () => {
 
     }
   }
+
   const getPostUser = async () => {
     try {
       const response = await CommonGetUrl(`posts/get-user-post/${params.id}`)
       setPosts(response.data.data)
+      setLoading(false);
     } catch (error) {
-
+      console.log(error)
     }
   }
 
   const getProfileViews = async () => {
-    const {id} = params
+    const { id } = params
     try {
-      const response = await CommonPostUrl('users/profile-view',{id})
+      const response = await CommonPostUrl('users/profile-view', { id })
       console.log(response.data);
     } catch (error) {
       console.log(error);
     }
   }
 
-  console.log({posts})
+  console.log({ posts })
   // console.log({ user })
 
-  const handleDelete = () => { };
-  const handleLikePost = () => { };
+  const handleDelete = async (id) => {
+    try {
+      const response = await CommonDeleteUrl(`posts/delete/post/${id}`)
+      await getPostUser();
+    } catch (error) {
+      console.log(error)
+    }
+  };
+
+  const handleLikePost = async (userId, postId) => {
+    try {
+      const response = await CommonPostUrl(`posts/like/${postId}`)
+      await getPostUser();
+    } catch (error) {
+
+    }
+
+
+  };
+
 
   return (
     <>
@@ -77,7 +98,7 @@ const Profile = () => {
                   <PostCard
                     post={post}
                     key={post?._id}
-                    user={user}
+                    user={userInfo}
                     deletePost={(handleDelete)}
                     likePost={handleLikePost}
                   />

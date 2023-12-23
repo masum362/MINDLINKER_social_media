@@ -8,8 +8,6 @@ const createPost = async (req, res, next) => {
 
     const { description, image } = req.body;
 
-    console.log({description, image})
-
     if (!description) {
       next("Please provide a description");
       return;
@@ -32,18 +30,14 @@ const createPost = async (req, res, next) => {
 };
 
 const getPosts = async (req, res, next) => {
-  console.log("calling")
   try {
     const { userId } = req.body.user;
 
     const { search } = req.body;
 
-    console.log(search)
-
     const user = await Users.findById(userId);
     const friends = user?.friends?.toString().split(",") ?? [];
     friends.push(userId);
-
 
     const searchPostQuery = {
       $or: [{ description: { $regex: search, $options: "i" } }],
@@ -92,6 +86,7 @@ const getSinglePost = async (req, res, next) => {
       select: "firstName lastName locaiton profileUrl  -password",
     });
 
+
     res.status(200).json({
       success: true,
       message: " successfully",
@@ -106,7 +101,6 @@ const getSinglePost = async (req, res, next) => {
 const getUserPost = async (req, res, next) => {
   try {
     const { id } = req.params;
-    console.log({id})
 
     const post = await Posts.find({ userId: id })
       .populate({
@@ -114,6 +108,7 @@ const getUserPost = async (req, res, next) => {
         select: "firstName lastName location profileUrl  -password",
       })
       .sort({ _id: -1 });
+
 
     res.status(200).json({
       success: true,
@@ -138,7 +133,10 @@ const getComments = async (req, res, next) => {
       .populate({
         path: "replies.userId",
         select: "firstName lastName location profileUrl -password",
-      }).sort('-createdAt')
+      })
+      .sort("-createdAt");
+
+
     res.status(200).json({
       success: true,
       message: " successfully",
@@ -154,6 +152,7 @@ const likePost = async (req, res, next) => {
   try {
     const { userId } = req.body.user;
     const { id } = req.params;
+    console.log({ id });
 
     const post = await Posts.findById(id);
 
@@ -219,8 +218,6 @@ const likePostComment = async (req, res, next) => {
           },
         }
       );
-
-      console.log(replyComments.replies[0])
 
       if (replyComments) {
         const index = replyComments.replies[0].likes.findIndex(
@@ -303,9 +300,6 @@ const replyComments = async (req, res, next) => {
       next("Comment is required!");
       return;
     } else {
-
-      console.log(id,comment)
-
       const commentInfo = await Comments.findById(id);
 
       commentInfo.replies.push({
@@ -318,7 +312,7 @@ const replyComments = async (req, res, next) => {
 
       await commentInfo.save();
 
-      res.status(200).json(commentInfo)
+      res.status(200).json(commentInfo);
     }
   } catch (error) {
     console.log(error);
@@ -326,23 +320,21 @@ const replyComments = async (req, res, next) => {
   }
 };
 
-const deletePost = async (req, res , next) => {
+const deletePost = async (req, res, next) => {
   try {
-    const {id} = req.params;
-    const {userId} = req.body.user;
+    const { id } = req.params;
+    const { userId } = req.body.user;
 
-    console.log({id})
+    console.log({ id });
 
     const result = await Posts.findByIdAndDelete(id);
-console.log(result)
-    res.status(200).json({success:true, message:"Successfully deleted"})
+    console.log({result});
+    res.status(200).json({ success: true, message: "Successfully deleted" });
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });
   }
 };
-
-
 
 export {
   createPost,
@@ -354,5 +346,5 @@ export {
   likePostComment,
   commentPost,
   deletePost,
-  replyComments
+  replyComments,
 };

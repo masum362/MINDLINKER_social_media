@@ -10,9 +10,11 @@ import { postComments, posts } from '../assets/data';
 import { CommonGetUrl, CommonPostUrl } from '../utils/api';
 import { commentPost } from '../../../server/controllers/postControllers';
 
-const ReplyCard = ({ reply, user, handleLike ,commentId}) => {
+const ReplyCard = ({ reply, user, handleLike }) => {
 
-    
+
+
+
     return (
         <div className=' w-full py-3'>
             <div className=' flex gap-3 items-center mb-1 '>
@@ -36,7 +38,7 @@ const ReplyCard = ({ reply, user, handleLike ,commentId}) => {
                 <div className=" mt-2 flex gap-6">
                     <p
                         className=' flex gap-2 items-center text-base text-ascent-2 cursor-pointer'
-                        onClick={() =>handleLike(commentId,reply?._id)}
+                        onClick={handleLike}
                     >
                         {reply?.likes?.includes(user?._id) ? (
                             <BiSolidLike size={20} color='blue' />
@@ -59,20 +61,15 @@ const CommentForm = ({ user, replyAt, id, getComments }) => {
 
 
     const handleComment = async (data) => {
-        setLoading(true)
         data.from = user.firstName + " " + user.lastName
         data.replyAt = replyAt
+        console.log({ data });
+        const url = !replyAt ? `posts/comment/${id}` : `posts/reply-comment/${id}`
+
         try {
-            if (replyAt) {
-                const response = await CommonPostUrl(`posts/reply-comment/${id}`, data)
-                await getComments(id)
-                setLoading(false)
-            } else {
-                const response = await CommonPostUrl(`posts/comment/${id}`, data)
-                reset({ comment: "", from: "" })
-                await getComments(id);
-                setLoading(false)
-            }
+            const response = await CommonPostUrl(url, data)
+            await getComments(id)
+            reset({ comment: "", from: "" })
         } catch (error) {
             console.log(error)
         }
@@ -127,7 +124,6 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
 
     const getComments = async (id) => {
         setReplyComments(0)
-        setLoading(true)
         try {
             const response = await CommonGetUrl(`posts/comments/${id}`)
             setComments(response.data.data)
@@ -135,29 +131,12 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
         } catch (error) {
             console.log(error);
         }
-        setLoading(false);
     };
 
-    const handleCommentLike = async (id) => {
-        try {
-            const response = await CommonPostUrl(`posts/like-comment/${id}`)
-            await getComments(post?._id)
-        } catch (error) {
-            console.log(error)
-
-        }
+    const handleLike = async (uri) => {
+       await likePost(uri);
+       await getComments(post?._id)
     }
-    const handleLike = async (commentId , replyid) => {
-        console.log({commentId,replyid})
-        try {
-            const response = await CommonPostUrl(`posts/like-comment/${commentId}/${replyid}`)
-            await getComments(post?._id)
-        } catch (error) {
-            console.log(error)
-
-        }
-    }
-
 
     return (
         <div className=' mb-2 bg-primary p-4 rounded-xl '>
@@ -190,12 +169,13 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
             </div>
 
             <div className=' mt-4 flex justify-between items-center px-3 py-2 text-ascent-2 text-base border-t border-[#66666645]'>
-                <p className=' flex gap-2 items-center text-base cursor-pointer'>
+                <p className=' flex gap-2 items-center text-base cursor-pointer' onClick={() => handleLike(`posts/like/${post?._id}`)}>
                     {post?.likes?.includes(user?._id) ? (
-                        <BiSolidLike size={20} color='blue' onClick={() => likePost(user?._id, post?._id)} />
+                        <BiSolidLike size={20} color='blue' />
 
                     ) : (
-                        <BiLike size={20} onClick={() => likePost(user?._id, post?._id)} />
+                        <BiLike size={20} onClick={() => handleLike(`posts/like/${post?._id}`)} />
+
                     )}
                     {post?.likes?.length}Likes
                 </p>
@@ -250,7 +230,8 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
                                     <div className='ml-12'>
                                         <p className='text-ascent-2'>{comment?.comment}</p>
                                         <div className=' mt-2 flex gap-6'>
-                                            <p className=' flex gap-2 items-center text-base text-ascent-2 cursor-pointer' onClick={(() => { handleCommentLike(user?.id) })}>
+                                            <p className=' flex gap-2 items-center text-base text-ascent-2 cursor-pointer'
+                                            onClick={() => handleLike(`posts/like-comment/${comment?._id}`)} >
                                                 {" "}
                                                 {comment?.likes?.includes(user?._id) ? (
                                                     <BiSolidLike size={20} color='blue' />
@@ -288,7 +269,14 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
                                                     reply={reply}
                                                     user={user}
                                                     key={reply?._id}
-                                                    handleLike={handleLike}
+                                                    handleLike={() =>
+                                                        handleLike(
+                                                            "posts/like-comment/" +
+                                                            comment?._id +
+                                                            "/" +
+                                                            reply?._id
+                                                        )
+                                                    }
                                                 />
                                             )
                                             )

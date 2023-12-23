@@ -44,7 +44,6 @@ const verifyUser = async (req, res) => {
                 })
                 .catch((error) => {
                   console.log(error);
-                  console.log(error);
                   const message = "verification failed or link is invalid ";
                   res.redirect(
                     `/users/verified?status=error&message=${message}`
@@ -145,8 +144,6 @@ const resetPassword = async (req, res) => {
 const changePassword = async (req, res) => {
   const { userId, password } = req.body;
 
-  console.log({ userId, password });
-
   try {
     const hashedPassword = await hashString(password);
 
@@ -154,8 +151,6 @@ const changePassword = async (req, res) => {
       { _id: userId },
       { password: hashedPassword }
     );
-
-    console.log(updatedUser);
 
     if (updatedUser) {
       await passwordReset.findOneAndDelete({ userId });
@@ -273,7 +268,7 @@ const friendRequest = async (req, res, next) => {
 const getFriendRequest = async (req, res, next) => {
   try {
     const { userId } = req.body.user;
-    console.log({ userId });
+
     const request = await FriendRequest.find({
       requestTo: userId,
       requestStatus: "pending",
@@ -289,7 +284,6 @@ const getFriendRequest = async (req, res, next) => {
       success: true,
       data: request,
     });
-    console.log({ request });
   } catch (error) {
     console.log(error.message);
     return res
