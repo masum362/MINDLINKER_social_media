@@ -31,10 +31,10 @@ const Home = () => {
   console.log(user, edit)
 
   useEffect(() => {
+    getAllPosts();
     setLoading(true);
     getFriendRequest();
     getSuggestedFriend();
-    getAllPosts();
     setTimeout(() => {
       setErrMsg("")
     }, 2000);

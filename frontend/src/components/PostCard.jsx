@@ -8,7 +8,6 @@ import { useForm } from 'react-hook-form'
 import { CustomBtn, Loading, TextInput } from './index';
 import { postComments, posts } from '../assets/data';
 import { CommonGetUrl, CommonPostUrl } from '../utils/api';
-import { commentPost } from '../../../server/controllers/postControllers';
 
 const ReplyCard = ({ reply, user, handleLike }) => {
 

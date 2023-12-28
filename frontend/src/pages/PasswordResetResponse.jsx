@@ -62,11 +62,11 @@ const PasswordResetResponse = () => {
 
   return (
     <div className='bg-bgColor w-full h-screen text-white flex items-center justify-center gap-3'>
-      {errMsg.status === 200 ? (
+      {errMsg?.status === 200 ? (
         <div className=' flex items-center justify-center flex-col gap-3'>
           {
-            errMsg.message && <span className={`text-sm ${errMsg?.status != "200" ? "text-[#f64949fe]" : 'text-[#2ba150fe]'} mt-0.5`}>
-              {errMsg.message}
+            errMsg?.message && <span className={`text-sm ${errMsg?.status != "200" ? "text-[#f64949fe]" : 'text-[#2ba150fe]'} mt-0.5`}>
+              {errMsg?.message}
             </span>
           }
           <form className='py-8 mt-2 text-ascent-2 flex flex-col gap-5' onSubmit={handleSubmit(registerSubmit)}>
@@ -109,7 +109,7 @@ const PasswordResetResponse = () => {
         </div>
       ) : (
         <div className=' flex items-center justify-center flex-col gap-3'>
-          <p>{errMsg.message}</p>
+          <p>{errMsg?.message}</p>
           <Link to={'/login'} className='px-12 py-3 bg-blue rounded-xl'>Login User</Link>
         </div>
       )}

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const APP_URL = "http://localhost:3002"
+const APP_URL = "https://mindlinkersocial.onrender.com"
 
 const token = JSON.parse(localStorage.getItem('user'))?.token ?? '';
 

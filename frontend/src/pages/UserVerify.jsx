@@ -21,7 +21,7 @@ const UserVerify = () => {
   const getUserStatus = async () => {
     try {
       const response = await CommonGetUrl(`users/verify/${userId}/${token}`)
-      if (response.data === 'User Verification Successfull') {
+      if (response.status === 200) {
         setErrMsg({ status: 200, message: response.data });
       }
       // else if()
@@ -32,7 +32,7 @@ const UserVerify = () => {
 
   return (
     <div className='bg-bgColor w-full h-screen text-white flex items-center justify-center gap-3'>
-      {errMsg === 200 ? (
+      {errMsg.status === 200 ? (
         <div className=' flex items-center justify-center flex-col gap-3'>
           <p>{errMsg.message}</p>
           <Link to={'/login'} className='px-12 py-3 bg-blue text-white rounded-xl'>Login User</Link>
