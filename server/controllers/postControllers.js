@@ -1,350 +1,449 @@
-import Posts from "../model/postSchema.js";
 import Users from "../model/userSchema.js";
-import Comments from "../model/commentSchema.js";
+import Verification from "../model/verificationSchema.js";
 
-const createPost = async (req, res, next) => {
+import { compareStrings, createJwtToken, hashString } from "../utils/index.js";
+import passwordReset from "../model/resetPasswordSchema.js";
+import { resetPasswordLink } from "../utils/emailVerification.js";
+import FriendRequest from "../model/requestSchema.js";
+
+const verifyUser = async (req, res) => {
+  const { userId, token } = req.params;
+
   try {
-    const { userId } = req.body.user;
-
-    const { description, image } = req.body;
-
-    if (!description) {
-      next("Please provide a description");
-      return;
+    const result = await Verification.findOne({ userId });
+    if (result) {
+      const { expiresAt, token: hashedToken } = result;
+      // token has expires
+      if (expiresAt < Date.now()) {
+        Verification.findOneAndDelete({ userId })
+          .then(() => {
+            Users.findOneAndDelete({ _id: userId });
+          })
+          .then(() => {
+            const message = "Verification token has expired.";
+          })
+          .catch((error) => {
+            console.log(error);
+            res.status(500).json({ message:"Something went wrong!"})
+          });
+      } else {
+        // token validation
+        compareStrings(token, hashedToken)
+          .then((isMatch) => {
+            if (isMatch) {
+              Users.findOneAndUpdate({ _id: userId }, { verified: true })
+                .then(() => {
+                  Verification.findOneAndDelete({ userId });
+                })
+                .then(() => {
+                  const message = "User Verification Successfull";
+                  res.status(200).json(message);
+                  // res.redirect(
+                  //   `/users/verified?status=success&message=${message}`
+                  // );
+                })
+                .catch((error) => {
+                  console.log(error);
+                  const message = "verification failed or link is invalid ";
+                  res.status(404).json(message)
+                  // res.redirect(
+                  //   `/users/verified?status=error&message=${message}`
+                  // );
+                });
+            } else {
+              const message = "verification failed or link is invalid ";
+              res.status(404).json(message);
+              // res.redirect(`/users/verified?status=error&message=${message}`);
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+            res.status(500).json({message:"Something went wrong!"})
+            // res.redirect(`/users/verified?status=error&message=`);
+          });
+      }
+    } else {
+      const message = "Invalid verification link.please try again later.";
+      res.status(404).json(message);
+      // res.redirect(`/users/verified?status=error&message=${message}`);
     }
-    const post = await Posts.create({
-      userId,
-      description,
-      image,
-    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(404).json({message:"Something went wrong!"});
+    // res.redirect("/users/verified?status=error&message=");
+  }
+};
 
-    res.status(200).json({
-      success: true,
-      message: "Post created successfully",
-      data: post,
-    });
+
+const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await Users.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: "FAILED",
+        message: "User not found",
+      });
+    } else {
+      const existingRequest = await passwordReset.findOne({ email });
+      if (existingRequest) {
+        if (existingRequest.expiresAt > Date.now()) {
+          return res.status(404).json({
+            success: "FAILED",
+            message: "Reset password link has already been sent by your email.",
+          });
+        }
+        await passwordReset.findOneAndDelete({ email });
+      } else {
+        await resetPasswordLink(user, res);
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(404).json({ message: error.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { userId, token } = req.params;
+
+  try {
+    // find user
+    const user = await Users.findById(userId);
+
+    if (!user) {
+      const message = "User not found";
+      // res.redirect(`/users/resetpassword?status=error&message=${message}`);
+      res.status(200).json(message);
+      return;
+    } else {
+      const ResetPass = await passwordReset.findOne({ userId });
+      if (!ResetPass) {
+        const message = "Invalid password reset link.Try again";
+        // res.redirect(`/users/resetpassword?status=error&message=${message}`);
+        res.status(200).json(message)
+        return;
+      } else {
+        const { expiresAt, token: hashResetToken } = ResetPass;
+
+        if (expiresAt < Date.now()) {
+          const message = "Password reset link has expired. Please try again";
+          res.status(200).json(message)
+          // res.redirect(`/users/resetpassword?status=error&message=${message}`);
+        } else {
+          const isMatch = await compareStrings(token, hashResetToken);
+          if (!isMatch) {
+            const message = "Invalid password reset link.Try again";
+            res.status(200).json(message)
+            // res.redirect(
+            //   `/users/resetpassword?status=error&message=${message}`
+            // );
+          } else {
+            res.status(200).json({message:"Successfull"})
+            // res.redirect(`/users/resetpassword?type=reset&id=${userId}`);
+          }
+        }
+      }
+    }
   } catch (error) {
     console.log(error.message);
     return res.status(404).json({ message: error.message });
   }
 };
 
-const getPosts = async (req, res, next) => {
+const changePassword = async (req, res) => {
+  const { userId, password } = req.body;
+
+  try {
+    const hashedPassword = await hashString(password);
+
+    const updatedUser = await Users.findOneAndUpdate(
+      { _id: userId },
+      { password: hashedPassword }
+    );
+
+    if (updatedUser) {
+      await passwordReset.findOneAndDelete({ userId });
+      res.status(200).json({ message:"Successfully Updated" });
+    }
+  } catch (error) {
+    console.log(error.message);
+    return res.status(404).json({ message: error.message });
+  }
+};
+
+const getUser = async (req, res, next) => {
   try {
     const { userId } = req.body.user;
+    const { id } = req.params;
 
-    const { search } = req.body;
+    const user = await Users.findById(id ?? userId).populate({
+      path: "friends",
+      select: "firstName lastName profession profileUrl -password",
+    });
 
-    const user = await Users.findById(userId);
-    const friends = user?.friends?.toString().split(",") ?? [];
-    friends.push(userId);
+    user.password = undefined;
 
-    const searchPostQuery = {
-      $or: [{ description: { $regex: search, $options: "i" } }],
+    res.status(200).json({
+      success: true,
+      user,
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Auth error",
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+const updateUser = async (req, res, next) => {
+  try {
+    const { firstName, lastName, location, profileUrl, profession } = req.body;
+
+    if (!(firstName || lastName || location || profileUrl || profession)) {
+      next("Please provide all required fields");
+      return;
+    }
+    const { userId } = req.body.user;
+
+    const updateUser = {
+      firstName,
+      lastName,
+      location,
+      profileUrl,
+      profession,
+      _id: userId,
     };
 
-    const posts = await Posts.find(search ? searchPostQuery : {})
-      .populate({
-        path: "userId",
-        select: "firstName lastName location profileUrl -password",
-      })
-      .sort({ _id: -1 });
-
-    const friendsPosts = posts?.filter((post) => {
-      return friends.includes(post?.userId?._id.toString());
-    });
-
-    const othersPost = posts?.filter((post) => {
-      return !friends.includes(post?.userId?._id.toString());
-    });
-
-    let postsRes = null;
-
-    if (friendsPosts?.length > 0) {
-      postsRes = search ? friendsPosts : [...friendsPosts, ...othersPost];
-    } else {
-      postsRes = posts;
-    }
-
-    res.status(200).json({
-      success: true,
-      message: " successfully",
-      data: postsRes,
-    });
-  } catch (error) {
-    console.log(error.message);
-    return res.status(404).json({ message: error.message });
-  }
-};
-
-const getSinglePost = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const post = await Posts.findById(id).populate({
-      path: "userId",
-      select: "firstName lastName locaiton profileUrl  -password",
-    });
-
-
-    res.status(200).json({
-      success: true,
-      message: " successfully",
-      data: post,
-    });
-  } catch (error) {
-    console.log(error.message);
-    return res.status(404).json({ message: error.message });
-  }
-};
-
-const getUserPost = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const post = await Posts.find({ userId: id })
-      .populate({
-        path: "userId",
-        select: "firstName lastName location profileUrl  -password",
-      })
-      .sort({ _id: -1 });
-
-
-    res.status(200).json({
-      success: true,
-      message: " successfully",
-      data: post,
-    });
-  } catch (error) {
-    console.log(error.message);
-    return res.status(404).json({ message: error.message });
-  }
-};
-
-const getComments = async (req, res, next) => {
-  try {
-    const { postId } = req.params;
-
-    const postComments = await Comments.find({ postId })
-      .populate({
-        path: "userId",
-        select: "firstName lastName location profileUrl location -password",
-      })
-      .populate({
-        path: "replies.userId",
-        select: "firstName lastName location profileUrl -password",
-      })
-      .sort("-createdAt");
-
-
-    res.status(200).json({
-      success: true,
-      message: " successfully",
-      data: postComments,
-    });
-  } catch (error) {
-    console.log(error.message);
-    return res.status(404).json({ message: error.message });
-  }
-};
-
-const likePost = async (req, res, next) => {
-  try {
-    const { userId } = req.body.user;
-    const { id } = req.params;
-    console.log({ id });
-
-    const post = await Posts.findById(id);
-
-    if (post) {
-      const index = post.likes.findIndex((pid) => pid === String(userId));
-
-      if (index === -1) {
-        post.likes.push(userId);
-      } else {
-        post.likes = post.likes.filter((pid) => pid !== String(userId));
-      }
-
-      const updatePost = await Posts.findByIdAndUpdate(id, post, { new: true });
-
-      res.status(200).json({
-        success: true,
-        message: "Successfully",
-        data: updatePost,
-      });
-    } else {
-      next("something went wrong!");
-      return;
-    }
-  } catch (error) {
-    console.log(error);
-    return res.status(404).json({ message: error.message });
-  }
-};
-
-const likePostComment = async (req, res, next) => {
-  const { userId } = req.body.user;
-  const { id, rid } = req.params;
-
-  try {
-    if (rid === undefined || rid === null || rid === "false") {
-      const comment = await Comments.findById(id);
-
-      const index = comment.likes.findIndex((el) => el === String(userId));
-
-      if (index === -1) {
-        comment.likes.push(userId);
-      } else {
-        comment.likes = comment.likes.filter((el) => el !== String(userId));
-      }
-
-      const updated = await Comments.findByIdAndUpdate(id, comment, {
-        new: true,
-      });
-
-      res.status(200).json({
-        success: true,
-        message: "Successfully",
-        data: updated,
-      });
-    } else {
-      const replyComments = await Comments.findOne(
-        { _id: id },
-        {
-          replies: {
-            $elemMatch: {
-              _id: rid,
-            },
-          },
-        }
-      );
-
-      if (replyComments) {
-        const index = replyComments.replies[0].likes.findIndex(
-          (i) => i === String(userId)
-        );
-
-        if (index === -1) {
-          replyComments.replies[0].likes.push(userId);
-        } else {
-          replyComments.replies[0] = replyComments.replies[0].likes.filter(
-            (el) => el !== String(userId)
-          );
-        }
-
-        const query = { _id: id, "replies._id": rid };
-
-        const updated = {
-          $set: {
-            "replies.$.likes": replyComments.replies[0].likes,
-          },
-        };
-
-        const result = await Comments.updateOne(query, updated, {
-          new: true,
-        });
-
-        res.status(200).json({
-          success: true,
-          message: "Successfully",
-          data: result,
-        });
-      } else {
-        next("something went wrong!");
-        return;
-      }
-    }
-  } catch (error) {
-    console.log(error);
-    return res.status(404).json({ message: error.message });
-  }
-};
-
-const commentPost = async (req, res, next) => {
-  try {
-    const { comment, from } = req.body;
-    const { userId } = req.body.user;
-    const { id } = req.params;
-
-    if (comment === null) {
-      return res.status(404).json({ message: "Comment is required." });
-    }
-
-    const newComment = new Comments({ comment, from, userId, postId: id });
-
-    await newComment.save();
-
-    //updating the post with the comments id
-    const post = await Posts.findById(id);
-
-    post.comments.push(newComment._id);
-
-    const updatedPost = await Posts.findByIdAndUpdate(id, post, {
+    const user = await Users.findByIdAndUpdate(userId, updateUser, {
       new: true,
     });
 
-    res.status(201).json(newComment);
+    await user.populate({ path: "friends", select: "-password" });
+
+    const token = createJwtToken(user?._id);
+
+    user.password = undefined;
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      user,
+      token,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(404).json({ message: error.message });
+    console.log(error.message);
+    return res.status(404).json({ message: error.message });
   }
 };
 
-const replyComments = async (req, res, next) => {
+const friendRequest = async (req, res, next) => {
   try {
     const { userId } = req.body.user;
-    const { comment, replyAt, from } = req.body;
-    const { id } = req.params;
+    const { requestTo } = req.body;
 
-    if (comment === null || comment === undefined || comment === "") {
-      next("Comment is required!");
+    const requestExist = await FriendRequest.findOne({
+      requestFrom: userId,
+      requestTo,
+      status: "accepted",
+    });
+
+    if (requestExist) {
+      next("Friend Request already sent!");
+      return;
+    }
+
+    await FriendRequest.create({
+      requestTo,
+      requestFrom: userId,
+    });
+    console.log("succesfully sent friend request");
+    res.status(201).json({
+      success: true,
+      message: "Friend request sent successfully",
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(404).json({ message: error.message });
+  }
+};
+
+const getFriendRequest = async (req, res, next) => {
+  try {
+    const { userId } = req.body.user;
+
+    const request = await FriendRequest.find({
+      requestTo: userId,
+      requestStatus: "pending",
+    })
+      .populate({
+        path: "requestFrom",
+        select: "firstName lastName  profileUrl  profession  -password",
+      })
+      .limit(10)
+      .sort({ _id: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: request,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res
+      .status(500)
+      .json({ message: "Auth error", success: false, error: error.message });
+  }
+};
+
+const acceptRequest = async (req, res, next) => {
+  try {
+    const id = req.body.user.userId;
+    const { rid, status } = req.body;
+    const requestExist = await FriendRequest.findById(rid);
+
+    if (!requestExist) {
+      next("No friend request found.");
       return;
     } else {
-      const commentInfo = await Comments.findById(id);
+      const newRes = await FriendRequest.findByIdAndUpdate(
+        { _id: rid },
+        { requestStatus: status }
+      );
 
-      commentInfo.replies.push({
-        comment,
-        replyAt,
-        from,
-        userId,
-        created_At: Date.now(),
-      });
+      if (status === "accepted") {
+        const user = await Users.findById(id);
+        user.friends.push(newRes?.requestFrom);
+        await user.save();
 
-      await commentInfo.save();
+        const friend = await Users.findById(newRes?.requestFrom);
+        friend.friends.push(newRes?.requestTo);
+        await friend.save();
 
-      res.status(200).json(commentInfo);
+        res.status(201).json({
+          success: true,
+          message: "friend request " + status,
+        });
+      } else {
+        const response = await FriendRequest.deleteMany({
+          requestStatus: status,
+        });
+        res.status(200).json({
+          success: true,
+          message: "friend request deleted successfully",
+        });
+      }
     }
   } catch (error) {
     console.log(error);
-    res.status(404).json({ message: error.message });
+    return res
+      .status(500)
+      .json({ message: "Auth error", success: false, error: error.message });
   }
 };
 
-const deletePost = async (req, res, next) => {
+const profileViews = async (req, res, next) => {
   try {
-    const { id } = req.params;
     const { userId } = req.body.user;
+    const { id } = req.body;
 
-    console.log({ id });
+   if(userId === id){
+    res.status(200).json({message:"successfully viewed"})
+   }
+   else{
+    const user = await Users.findById(id);
 
-    const result = await Posts.findByIdAndDelete(id);
-    console.log({result});
-    res.status(200).json({ success: true, message: "Successfully deleted" });
+    const isViewed = user?.views?.filter((view) => view === userId);
+
+    if (isViewed.length > 0) {
+      res.status(201).json({
+        success: false,
+        message: "Alredy viewed",
+      });
+    } else {
+      user.views.push(userId);
+      await user.save();
+      res.status(201).json({
+        success: true,
+        message: "successfully viewed",
+      });
+    }
+   }
   } catch (error) {
     console.log(error);
-    res.status(404).json({ message: error.message });
+    return res
+      .status(500)
+      .json({ message: "Auth error", success: false, error: error.message });
+  }
+};
+
+const suggestedFriends = async (req, res, next) => {
+  try {
+    const { userId } = req.body.user;
+
+    let queryObject = {};
+    let findArr = [];
+
+    const FriendReqests = await FriendRequest.find(
+      { $or: [{ requestFrom: userId }, { requestTo: userId }] },
+      "requestFrom requestTo -_id"
+    );
+
+    FriendReqests.map((item) => {
+      if (item.requestFrom == userId) {
+        return findArr.push(String(item.requestTo));
+      } else {
+        return findArr.push(String(item.requestFrom));
+      }
+    });
+
+    findArr.push(userId);
+
+    let queryResult = await Users.find({
+      _id :{ $nin: findArr },
+      verified:"true",
+      $or:[{
+        friends:{$nin: userId }
+      }]
+    })
+      .limit(15)
+      .select("firstName lastName profileUrl profession -password");
+
+    // const NotInFriendReq = [...queryResult].filter(
+    //   (item) => FriendReqests.indexOf(item._id) === -1
+    // );
+
+    const suggestedFriends = queryResult;
+
+    res.status(200).json({
+      success: true,
+      data: suggestedFriends,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Auth error", success: false, error: error.message });
   }
 };
 
 export {
-  createPost,
-  getPosts,
-  getSinglePost,
-  getUserPost,
-  getComments,
-  likePost,
-  likePostComment,
-  commentPost,
-  deletePost,
-  replyComments,
+  verifyUser,
+  requestPasswordReset,
+  resetPassword,
+  changePassword,
+  getUser,
+  updateUser,
+  friendRequest,
+  getFriendRequest,
+  acceptRequest,
+  profileViews,
+  suggestedFriends,
 };

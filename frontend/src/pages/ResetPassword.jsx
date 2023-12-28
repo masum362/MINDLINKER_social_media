@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { CustomBtn, Loading, TextInput } from '../components/index';
 import { CommonPostUrl } from '../utils/api';
@@ -7,25 +7,31 @@ const ResetPassword = () => {
 
 
 
-
-  const [errMsg, setErrMsg] = useState('')
+  const [errMsg, setErrMsg] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm({ mode: "onChange" });
 
   const onSubmit = async (data) => {
+    setIsSubmitting(true);
     try {
       const response = await CommonPostUrl('users/request-passwordreset', data)
       if (response.data.success !== 'failed') {
         setErrMsg({ success: 'success', message: response.data.message })
       }
+      setIsSubmitting(false);
       console.log(response)
     } catch (error) {
+      setIsSubmitting(false);
       console.log(error);
     }
 
   }
 
+  useEffect(() => {
+
+  }, [errMsg])
+  
 
 
   return (

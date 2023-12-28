@@ -5,6 +5,8 @@ import Profile from './pages/Profile'
 import Register from './pages/Register'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
+import UserVerify from "./pages/UserVerify";
+import PasswordResetResponse from "./pages/PasswordResetResponse";
 
 export const Layout = () => {
   const { user } = useSelector(state => state.user)
@@ -37,6 +39,8 @@ function App() {
         <Route path='/register' element={<Register />} />
         <Route path='/login' element={<Login />} />
         <Route path='/reset-password' element={<ResetPassword />} />
+        <Route path='/users/verify/:userId/:token' element={<UserVerify />} />
+        <Route path='/users/reset-password/:userId/:token' element={<PasswordResetResponse />} />
       </Routes>
 
     </div>

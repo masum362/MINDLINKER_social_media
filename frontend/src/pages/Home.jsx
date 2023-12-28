@@ -39,7 +39,7 @@ const Home = () => {
       setErrMsg("")
     }, 2000);
     getUser();
-  }, [file, errMsg])
+  }, [file])
 
 
 

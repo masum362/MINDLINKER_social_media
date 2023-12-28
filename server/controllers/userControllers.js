@@ -5,6 +5,7 @@ import { compareStrings, createJwtToken, hashString } from "../utils/index.js";
 import passwordReset from "../model/resetPasswordSchema.js";
 import { resetPasswordLink } from "../utils/emailVerification.js";
 import FriendRequest from "../model/requestSchema.js";
+const {app} = process.env
 
 const verifyUser = async (req, res) => {
   const { userId, token } = req.params;
@@ -21,11 +22,10 @@ const verifyUser = async (req, res) => {
           })
           .then(() => {
             const message = "Verification token has expired.";
-            res.redirect(`/users/verified?status=error&message=${message}`);
           })
           .catch((error) => {
             console.log(error);
-            res.redirect(`/users/verified?status=error&message=${message}`);
+            res.status(500).json({ message:"Something went wrong!"})
           });
       } else {
         // token validation
@@ -38,34 +38,40 @@ const verifyUser = async (req, res) => {
                 })
                 .then(() => {
                   const message = "User Verification Successfull";
-                  res.redirect(
-                    `/users/verified?status=success&message=${message}`
-                  );
+                  res.status(200).json(message);
+                  // res.redirect(
+                  //   `/users/verified?status=success&message=${message}`
+                  // );
                 })
                 .catch((error) => {
                   console.log(error);
                   const message = "verification failed or link is invalid ";
-                  res.redirect(
-                    `/users/verified?status=error&message=${message}`
-                  );
+                  res.status(404).json(message)
+                  // res.redirect(
+                  //   `/users/verified?status=error&message=${message}`
+                  // );
                 });
             } else {
               const message = "verification failed or link is invalid ";
-              res.redirect(`/users/verified?status=error&message=${message}`);
+              res.status(404).json(message);
+              // res.redirect(`/users/verified?status=error&message=${message}`);
             }
           })
           .catch((error) => {
             console.log(error);
-            res.redirect(`/users/verified?status=error&message=`);
+            res.status(500).json({message:"Something went wrong!"})
+            // res.redirect(`/users/verified?status=error&message=`);
           });
       }
     } else {
       const message = "Invalid verification link.please try again later.";
-      res.redirect(`/users/verified?status=error&message=${message}`);
+      res.status(404).json(message);
+      // res.redirect(`/users/verified?status=error&message=${message}`);
     }
   } catch (error) {
     console.log(error.message);
-    res.redirect("/users/verified?status=error&message=");
+    res.status(404).json({message:"Something went wrong!"});
+    // res.redirect("/users/verified?status=error&message=");
   }
 };
 
