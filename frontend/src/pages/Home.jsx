@@ -28,6 +28,7 @@ const Home = () => {
     },
   });
 
+  console.log(posts);
   console.log(user, edit)
 
   useEffect(() => {
@@ -35,9 +36,6 @@ const Home = () => {
     setLoading(true);
     getFriendRequest();
     getSuggestedFriend();
-    setTimeout(() => {
-      setErrMsg("")
-    }, 2000);
     getUser();
   }, [file])
 
@@ -92,12 +90,14 @@ const Home = () => {
 
 
   const getAllPosts = async () => {
+    setLoading(true);
     try {
       const result = await CommonPostUrl('posts/',)
       dispatch(getPosts(result.data.data));
       setLoading(false);
     } catch (error) {
       setErrMsg(error)
+      setLoading(false);
     }
   }
 

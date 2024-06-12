@@ -16,8 +16,9 @@ const __dirname = path.resolve(path.dirname(''))
 console.log(__dirname)
 dotenv.config();
 
+
 const corsOptions = {
-    origin:process.env.NODE_ENV === ' production' ? '' : 'http://localhost:5173',
+    origin:process.env.NODE_ENV === ' production' ? ['https://mindlinker.netlify.app','http://localhost:5173'] : 'http://localhost:5173',
     creadential:true
 }
 
