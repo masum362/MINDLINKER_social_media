@@ -5,7 +5,7 @@ import { compareStrings, createJwtToken, hashString } from "../utils/index.js";
 import passwordReset from "../model/resetPasswordSchema.js";
 import { resetPasswordLink } from "../utils/emailVerification.js";
 import FriendRequest from "../model/requestSchema.js";
-const {app} = process.env
+const { app } = process.env;
 
 const verifyUser = async (req, res) => {
   const { userId, token } = req.params;
@@ -25,7 +25,9 @@ const verifyUser = async (req, res) => {
           })
           .catch((error) => {
             console.log(error);
-            res.status(500).json({ message:"Something went wrong!"})
+            return res
+              .status(500)
+              .json({ message: "Something went wrong!", success: false });
           });
       } else {
         // token validation
@@ -38,7 +40,7 @@ const verifyUser = async (req, res) => {
                 })
                 .then(() => {
                   const message = "User Verification Successfull";
-                  res.status(200).json(message);
+                  return res.status(200).json({ message, success: true });
                   // res.redirect(
                   //   `/users/verified?status=success&message=${message}`
                   // );
@@ -46,20 +48,20 @@ const verifyUser = async (req, res) => {
                 .catch((error) => {
                   console.log(error);
                   const message = "verification failed or link is invalid ";
-                  res.status(404).json(message)
+                  return res.status(404).json({ message, success: false });
                   // res.redirect(
                   //   `/users/verified?status=error&message=${message}`
                   // );
                 });
             } else {
               const message = "verification failed or link is invalid ";
-              res.status(404).json(message);
+              return res.status(404).json(message);
               // res.redirect(`/users/verified?status=error&message=${message}`);
             }
           })
           .catch((error) => {
             console.log(error);
-            res.status(500).json({message:"Something went wrong!"})
+            res.status(500).json({ message: "Something went wrong!" });
             // res.redirect(`/users/verified?status=error&message=`);
           });
       }
@@ -70,7 +72,7 @@ const verifyUser = async (req, res) => {
     }
   } catch (error) {
     console.log(error.message);
-    res.status(404).json({message:"Something went wrong!"});
+    res.status(404).json({ message: "Something went wrong!" });
     // res.redirect("/users/verified?status=error&message=");
   }
 };
@@ -82,7 +84,7 @@ const requestPasswordReset = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        success: "FAILED",
+        success: false,
         message: "User not found",
       });
     } else {
@@ -90,7 +92,7 @@ const requestPasswordReset = async (req, res) => {
       if (existingRequest) {
         if (existingRequest.expiresAt > Date.now()) {
           return res.status(404).json({
-            success: "FAILED",
+            success: false,
             message: "Reset password link has already been sent by your email.",
           });
         }
@@ -160,7 +162,7 @@ const changePassword = async (req, res) => {
 
     if (updatedUser) {
       await passwordReset.findOneAndDelete({ userId });
-      res.status(200).json({ ok: true });
+      res.status(200).json({ success: true });
     }
   } catch (error) {
     console.log(error.message);
@@ -178,18 +180,18 @@ const getUser = async (req, res, next) => {
       select: "firstName lastName profession profileUrl -password",
     });
 
-    user.password = undefined;
-
-    res.status(200).json({
-      success: true,
-      user,
-    });
-
     if (!user) {
       return res
         .status(404)
         .json({ message: "User not found", success: false });
     }
+
+    user.password = undefined;
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -205,8 +207,9 @@ const updateUser = async (req, res, next) => {
     const { firstName, lastName, location, profileUrl, profession } = req.body;
 
     if (!(firstName || lastName || location || profileUrl || profession)) {
-      next("Please provide all required fields");
-      return;
+      return res
+        .status(501)
+        .json({ message: "Invalid Fields", success: false });
     }
     const { userId } = req.body.user;
 
@@ -228,7 +231,7 @@ const updateUser = async (req, res, next) => {
     const token = createJwtToken(user?._id);
 
     user.password = undefined;
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "User updated successfully",
       user,
@@ -261,7 +264,7 @@ const friendRequest = async (req, res, next) => {
       requestFrom: userId,
     });
     console.log("succesfully sent friend request");
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Friend request sent successfully",
     });
@@ -286,7 +289,7 @@ const getFriendRequest = async (req, res, next) => {
       .limit(10)
       .sort({ _id: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: request,
     });
@@ -306,7 +309,9 @@ const acceptRequest = async (req, res, next) => {
 
     if (!requestExist) {
       next("No friend request found.");
-      return;
+      return res
+        .status(403)
+        .json({ message: "No Friend request found.", success: false });
     } else {
       const newRes = await FriendRequest.findByIdAndUpdate(
         { _id: rid },
@@ -322,7 +327,7 @@ const acceptRequest = async (req, res, next) => {
         friend.friends.push(newRes?.requestTo);
         await friend.save();
 
-        res.status(201).json({
+        return res.status(201).json({
           success: true,
           message: "friend request " + status,
         });
@@ -330,7 +335,7 @@ const acceptRequest = async (req, res, next) => {
         const response = await FriendRequest.deleteMany({
           requestStatus: status,
         });
-        res.status(200).json({
+        return res.status(200).json({
           success: true,
           message: "friend request deleted successfully",
         });
@@ -349,28 +354,27 @@ const profileViews = async (req, res, next) => {
     const { userId } = req.body.user;
     const { id } = req.body;
 
-   if(userId === id){
-    res.status(200).json({message:"successfully viewed"})
-   }
-   else{
-    const user = await Users.findById(id);
-
-    const isViewed = user?.views?.filter((view) => view === userId);
-
-    if (isViewed.length > 0) {
-      res.status(201).json({
-        success: false,
-        message: "Alredy viewed",
-      });
+    if (userId === id) {
+      return res.status(200).json({ message: "successfully viewed" });
     } else {
-      user.views.push(userId);
-      await user.save();
-      res.status(201).json({
-        success: true,
-        message: "successfully viewed",
-      });
+      const user = await Users.findById(id);
+
+      const isViewed = user?.views?.filter((view) => view === userId);
+
+      if (isViewed.length > 0) {
+        res.status(201).json({
+          success: false,
+          message: "Alredy viewed",
+        });
+      } else {
+        user.views.push(userId);
+        await user.save();
+        return res.status(201).json({
+          success: true,
+          message: "successfully viewed",
+        });
+      }
     }
-   }
   } catch (error) {
     console.log(error);
     return res
@@ -402,10 +406,12 @@ const suggestedFriends = async (req, res, next) => {
     findArr.push(userId);
 
     let queryResult = await Users.find({
-      _id :{ $nin: findArr },
-      $or:[{
-        friends:{$nin: userId }
-      }]
+      _id: { $nin: findArr },
+      $or: [
+        {
+          friends: { $nin: userId },
+        },
+      ],
     })
       .limit(15)
       .select("firstName lastName profileUrl profession -password");
@@ -416,7 +422,7 @@ const suggestedFriends = async (req, res, next) => {
 
     const suggestedFriends = queryResult;
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: suggestedFriends,
     });

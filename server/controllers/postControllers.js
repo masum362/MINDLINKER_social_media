@@ -9,8 +9,9 @@ const createPost = async (req, res, next) => {
     const { description, image } = req.body;
 
     if (!description) {
-      next("Please provide a description");
-      return;
+      return res
+        .status(501)
+        .json({ message: "Please provide a description", success: false });
     }
     const post = await Posts.create({
       userId,
@@ -18,7 +19,7 @@ const createPost = async (req, res, next) => {
       image,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Post created successfully",
       data: post,
@@ -66,7 +67,7 @@ const getPosts = async (req, res, next) => {
       postsRes = posts;
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: " successfully",
       data: postsRes,
@@ -86,8 +87,7 @@ const getSinglePost = async (req, res, next) => {
       select: "firstName lastName locaiton profileUrl  -password",
     });
 
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: " successfully",
       data: post,
@@ -109,8 +109,7 @@ const getUserPost = async (req, res, next) => {
       })
       .sort({ _id: -1 });
 
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: " successfully",
       data: post,
@@ -136,8 +135,7 @@ const getComments = async (req, res, next) => {
       })
       .sort("-createdAt");
 
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: " successfully",
       data: postComments,
@@ -167,7 +165,7 @@ const likePost = async (req, res, next) => {
 
       const updatePost = await Posts.findByIdAndUpdate(id, post, { new: true });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Successfully",
         data: updatePost,
@@ -202,7 +200,7 @@ const likePostComment = async (req, res, next) => {
         new: true,
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Successfully",
         data: updated,
@@ -244,14 +242,13 @@ const likePostComment = async (req, res, next) => {
           new: true,
         });
 
-        res.status(200).json({
+        return res.status(200).json({
           success: true,
           message: "Successfully",
           data: result,
         });
       } else {
-        next("something went wrong!");
-        return;
+        return res.status(404).json({message:"Somethig went wrong!",success:false});
       }
     }
   } catch (error) {
@@ -283,7 +280,7 @@ const commentPost = async (req, res, next) => {
       new: true,
     });
 
-    res.status(201).json(newComment);
+    return res.status(201).json({success:true,newComment});
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });
@@ -297,8 +294,7 @@ const replyComments = async (req, res, next) => {
     const { id } = req.params;
 
     if (comment === null || comment === undefined || comment === "") {
-      next("Comment is required!");
-      return;
+      return res.status(404).json({message:"Comment is required",success:false});
     } else {
       const commentInfo = await Comments.findById(id);
 
@@ -312,7 +308,7 @@ const replyComments = async (req, res, next) => {
 
       await commentInfo.save();
 
-      res.status(200).json(commentInfo);
+      return res.status(200).json({success:true,commentInfo});
     }
   } catch (error) {
     console.log(error);
@@ -328,8 +324,8 @@ const deletePost = async (req, res, next) => {
     console.log({ id });
 
     const result = await Posts.findByIdAndDelete(id);
-    console.log({result});
-    res.status(200).json({ success: true, message: "Successfully deleted" });
+    console.log({ result });
+    return res.status(200).json({ success: true, message: "Successfully deleted" });
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });

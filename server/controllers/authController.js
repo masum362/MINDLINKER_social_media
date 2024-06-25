@@ -7,24 +7,22 @@ const homePage = (req, res) => {
   console.log("homepage called");
 };
 const register = async (req, res, next) => {
-
   // await Users.deleteMany({})
   // await Verification.deleteMany({})
 
   const { firstName, lastName, email, password } = req.body;
 
-console.log({ firstName, lastName, email, password } )
+  console.log({ firstName, lastName, email, password });
 
   if (!(firstName, lastName, email, password)) {
-    next("Field Value required!");
-    return;
+   
+    return res.status(501).json({message:"Invalid Fields",success:false});
   }
 
   try {
     const existUser = await Users.findOne({ email });
     if (existUser) {
-      next("User already exists");
-      return;
+      return res.status(403).json({message:"User Already Exists",success:false});
     } else {
       const hashedPassword = await hashString(password);
 
@@ -50,8 +48,7 @@ const login = async (req, res, next) => {
   try {
     // validation
     if (!email || !password) {
-      next("please provide user credentials");
-      return;
+      return res.status(501).json({message:"Invalid Fields",success:false});
     } else {
       // find user by email
 
@@ -61,25 +58,23 @@ const login = async (req, res, next) => {
       });
 
       if (!user) {
-        next("Invalid User!");
-        return;
+        return res.status(404).json({ message: "Invalid User!" });
       } else if (!user?.verified) {
-        next(
-          "User not verified. check your email account and verify your email"
-        );
-        return;
+        return res.status(404).json({
+          message:
+            "User not verified. check your email account and verify your email",
+        });
       } else {
         //   compare password
         const isMatch = await compareStrings(password, user?.password);
         if (!isMatch) {
-          next("invalid user!");
-          return;
+          return res.status(404).json({ message: "Invalid User!" });
         }
 
         user.password = undefined;
         const token = createJwtToken(user?._id);
 
-        res.status(201).json({
+       return res.status(201).json({
           success: true,
           message: "Login successfully",
           user,

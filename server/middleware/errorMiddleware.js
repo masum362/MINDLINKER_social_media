@@ -1,11 +1,14 @@
 // Error Middleware | Next function
 
 const errorMiddleware = ( err , req, res , next) => {
+
+    console.log({err});
     const defaultError = {
         statusCode : 404,
         sucess:"Falied",
         message:err
     };
+
 
     if(err?.name ==="ValidationError"){
         defaultError.statusCode = 404;
@@ -24,7 +27,6 @@ const errorMiddleware = ( err , req, res , next) => {
         sucess:defaultError.sucess,
         message:defaultError.message
     })
-
 }
 
 export default errorMiddleware;

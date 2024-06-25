@@ -37,22 +37,24 @@ const Home = () => {
     getFriendRequest();
     getSuggestedFriend();
     getUser();
-  }, [file])
+  }, [user])
 
 
 
 
 
   const getUser = async () => {
-    try {
-      const response = await CommonGetUrl(`users/get-user/${user._id}`)
-      if (response.data.success === true) {
-        dispatch(loginUser({ token: user?.token, ...response.data.user }))
-        getFriendRequest();
-        getSuggestedFriend();
-      }
-    } catch (error) {
+    if (!user) {
+      try {
+        const response = await CommonGetUrl(`users/get-user/${user._id}`)
+        if (response.data.success === true) {
+          dispatch(loginUser({ token: user?.token, ...response.data.user }))
+          getFriendRequest();
+          getSuggestedFriend();
+        }
+      } catch (error) {
 
+      }
     }
   }
 

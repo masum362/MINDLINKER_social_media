@@ -38,8 +38,8 @@ const Login = () => {
         navigate('/')
       }, 2000);
     } catch (error) {
-      console.log(error)
-      setErrMsg({ status: 'failed', message: "Something went wrong!" })
+      console.log(error.response);
+      setErrMsg({ status: 'failed', message: error.response.data.message })
       setIsSubmitting(false);
 
     }

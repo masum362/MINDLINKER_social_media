@@ -37,7 +37,7 @@ app.use(express.json({limit:"10mb"}))
 app.use(express.urlencoded({extended:true}));
 app.use(morgan("dev"));
 // erro middleware
-app.use(errorMiddleware)
+// app.use(errorMiddleware)
 
 
 app.use('/',router)

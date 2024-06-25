@@ -3,8 +3,9 @@ import jwt from "jsonwebtoken";
 const userAuth = async (req, res, next) => {
   const authHeader = req.headers?.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
-    next("Authentication Failed ");
-    return
+    // next("Authentication Failed ");
+    return res.status(401).json({message: "Authentication Failed"});
+    
   }
 
   const token = authHeader?.split(" ")[1];
@@ -12,8 +13,8 @@ const userAuth = async (req, res, next) => {
 console.log({token})
   try {
     if (!token) {
-      next("Invalid User!");
-      return;
+      // next("Invalid User!");
+      return res.status(404).json({messag: " Invalid User!"});
     }else{
       const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
       
@@ -28,7 +29,8 @@ console.log({token})
     }
   } catch (error) {
     console.log(error);
-    next("Authentication failed ");
+    // next("Authentication failed ");
+    return res.status(401).send({messag:"Authentication failed"});
   }
 };
 
