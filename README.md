@@ -1,8 +1,8 @@
 <div align='center'>
 
-# <h1 style="text-align:center ; padding:5px 10px">Academy Cloud</h1>
+# <h1 style="text-align:center ; padding:5px 10px">MinkLinker</h1>
 
-<h3>Providing best books since 1992</h3>
+<h3>Connect with World</h3>
 
 </div>
 
