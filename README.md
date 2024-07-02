@@ -1,17 +1,14 @@
 <div align='center'>
 
-<h1>MINDLINKER </h1>
-<p>social media app</p>
+# <h1 style="text-align:center ; padding:5px 10px">Academy Cloud</h1>
 
-<h4> <span> · </span> <a href="https://github.com/masum362/MINDLINKER/blob/master/README.md"> Documentation </a> <span> · </span> <a href="https://github.com/masum362/MINDLINKER/issues"> Report Bug </a> <span> · </span> <a href="https://github.com/masum362/MINDLINKER/issues"> Request Feature </a> </h4>
-
+<h3>Providing best books since 1992</h3>
 
 </div>
 
-# :notebook_with_decorative_cover: Table of Contents
+<p>MindLinked is a social media app.where user can share their daily updates,make friends,like ,comment , reply to others.also user can seach any queries with our search feature. user can see the visiotor of his profile.</p>
 
-- [About the Project](#star2-about-the-project)
-- [Contact](#handshake-contact)
+[Live Link](https://mindlinker.netlify.app/)
 
 
 ## :star2: About the Project
@@ -43,4 +40,4 @@
 
 Md. Masum Ahmed - - masumahmed64077@gmail.com
 
-Project Link: [https://github.com/masum362/MINDLINKER_social_media](https://github.com/masum362/MINDLINKER_social_media)
+
