@@ -13,6 +13,21 @@
 
 ## :star2: About the Project
 
+## Project Frontend Starting tips
+
+```javascript
+cd ./client
+npm i
+npm run dev
+```
+## Project backend Starting tips
+
+```javascript
+cd ./frontend
+npm i
+npm run dev
+```
+
 ### :dart: Features
 - login
 - registration
