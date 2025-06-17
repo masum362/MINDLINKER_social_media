@@ -12,6 +12,7 @@ import { loginUser } from '../redux/userSlice';
 
 const Home = () => {
   const { user, edit } = useSelector((state) => state.user);
+  // const [posts, setPosts] = useState(useSelector((state) => state.post.posts));
   const { posts } = useSelector((state) => state.post);
   const [friendRequest, setFriendRequest] = useState([]);
   const [suggestedFriends, setSuggestedFriends] = useState([])
@@ -34,20 +35,18 @@ const Home = () => {
     getFriendRequest();
     getSuggestedFriend();
     getUser();
-  }, [user])
-
-
-
+  }, [])
 
 
   const getUser = async () => {
     if (!user) {
       try {
         const response = await CommonGetUrl(`users/get-user/${user._id}`)
+        
         if (response.data.success === true) {
           dispatch(loginUser({ token: user?.token, ...response.data.user }))
-          getFriendRequest();
-          getSuggestedFriend();
+          // getFriendRequest();
+          // getSuggestedFriend();
         }
       } catch (error) {
 
@@ -104,7 +103,17 @@ const Home = () => {
   const likePost = async (uri) => {
     try {
       const response = await CommonPostUrl(uri)
-      getAllPosts();
+      console.log({ response });
+      if (response.data.success === true) {
+        setErrMsg({ status: "success", message: response.data.message });
+      }
+
+      // // updated post
+      const updatedPosts = posts.map(post =>{
+        return post._id === response.data.data._id ? response.data.data : post;
+      })
+
+      dispatch(getPosts(updatedPosts));
     } catch (error) {
       setErrMsg(error)
     }
@@ -113,7 +122,8 @@ const Home = () => {
   const deletePost = async (postid) => {
     try {
       const response = await CommonDeleteUrl(`posts/delete/post/${postid}`)
-      getAllPosts();
+
+      // getAllPosts();
       setErrMsg(response.data);
     } catch (error) {
       setErrMsg(error)
@@ -154,6 +164,7 @@ const Home = () => {
     try {
       const response = await CommonPostUrl('users/accept-request', obj)
       if (response.data.success === true) {
+        setFriendRequest(friendRequest.filter(item => item._id !== id));
         getUser();
       }
     } catch (error) {
@@ -227,7 +238,7 @@ const Home = () => {
               loading ? <Loading /> : posts.length > 0 ? (
                 posts?.map(post => {
                   return (
-                    <PostCard key={posts?._id} post={post} user={user} deletePost={deletePost} likePost={likePost} />
+                    <PostCard key={post?._id} post={post} user={user} deletePost={deletePost} likePost={likePost} />
                   )
                 })
               ) : (

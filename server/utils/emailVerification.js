@@ -63,10 +63,6 @@ export const sendVerificationEmail = async (user, res) => {
     });
 
     if (newVerifiedEmail) {
-      // res.status(201).json({
-      //   success: "PENDING",
-      //   message: "Verified email",
-      // });
       transporter.sendMail(mailOptions).then(() => {
         res.status(201).json({
           success: "PENDING",

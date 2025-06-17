@@ -13,7 +13,6 @@ import errorMiddleware from './middleware/errorMiddleware.js';
 
 
 const __dirname = path.resolve(path.dirname(''))
-console.log(__dirname)
 dotenv.config();
 
 

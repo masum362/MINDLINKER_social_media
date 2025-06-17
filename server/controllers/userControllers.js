@@ -335,6 +335,8 @@ const acceptRequest = async (req, res, next) => {
         const response = await FriendRequest.deleteMany({
           requestStatus: status,
         });
+
+        console.log(response);
         return res.status(200).json({
           success: true,
           message: "friend request deleted successfully",

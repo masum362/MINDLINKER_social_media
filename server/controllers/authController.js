@@ -21,6 +21,8 @@ const register = async (req, res, next) => {
 
   try {
     const existUser = await Users.findOne({ email });
+
+    console.log(existUser);
     if (existUser) {
       return res.status(403).json({message:"User Already Exists",success:false});
     } else {
@@ -32,6 +34,8 @@ const register = async (req, res, next) => {
         email,
         password: hashedPassword,
       });
+
+      
 
       // send verification email
       await sendVerificationEmail(user, res);

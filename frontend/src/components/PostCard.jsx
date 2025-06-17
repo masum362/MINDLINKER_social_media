@@ -133,6 +133,8 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
     };
 
     const handleLike = async (uri) => {
+        console.log("clicked");
+        console.log(uri);
        await likePost(uri);
        await getComments(post?._id)
     }

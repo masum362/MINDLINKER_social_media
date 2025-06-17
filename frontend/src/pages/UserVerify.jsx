@@ -9,6 +9,8 @@ const UserVerify = () => {
 
   const [errMsg, setErrMsg] = useState({})
 
+  console.log(errMsg);
+
   useEffect(() => {
 
     getUserStatus();
@@ -22,7 +24,7 @@ const UserVerify = () => {
     try {
       const response = await CommonGetUrl(`users/verify/${userId}/${token}`)
       if (response.status === 200) {
-        setErrMsg({ status: 200, message: response.data });
+        setErrMsg({ status: 200, message: response.data.message });
       }
       // else if()
     } catch (error) {

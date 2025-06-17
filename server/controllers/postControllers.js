@@ -123,6 +123,7 @@ const getUserPost = async (req, res, next) => {
 const getComments = async (req, res, next) => {
   try {
     const { postId } = req.params;
+    
 
     const postComments = await Comments.find({ postId })
       .populate({
@@ -147,27 +148,38 @@ const getComments = async (req, res, next) => {
 };
 
 const likePost = async (req, res, next) => {
+  let message ;
   try {
     const { userId } = req.body.user;
     const { id } = req.params;
     console.log({ id });
 
-    const post = await Posts.findById(id);
-
+    const post = await Posts.findById(id)
+     
     if (post) {
       const index = post.likes.findIndex((pid) => pid === String(userId));
 
       if (index === -1) {
         post.likes.push(userId);
+        message = "Successfully liked post";
       } else {
         post.likes = post.likes.filter((pid) => pid !== String(userId));
+        message = "Successfully unliked post";
       }
 
-      const updatePost = await Posts.findByIdAndUpdate(id, post, { new: true });
+      const updatePost = await Posts.findByIdAndUpdate(id, post, { new: true }).populate({
+        path: "userId",
+        select: "firstName lastName location profileUrl -password",
+      })
+      .populate({
+        path: "comments",
+      })
 
+      console.log(post);
+ 
       return res.status(200).json({
         success: true,
-        message: "Successfully",
+        message,
         data: updatePost,
       });
     } else {
@@ -248,7 +260,9 @@ const likePostComment = async (req, res, next) => {
           data: result,
         });
       } else {
-        return res.status(404).json({message:"Somethig went wrong!",success:false});
+        return res
+          .status(404)
+          .json({ message: "Somethig went wrong!", success: false });
       }
     }
   } catch (error) {
@@ -280,7 +294,7 @@ const commentPost = async (req, res, next) => {
       new: true,
     });
 
-    return res.status(201).json({success:true,newComment});
+    return res.status(201).json({ success: true, newComment });
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });
@@ -294,7 +308,9 @@ const replyComments = async (req, res, next) => {
     const { id } = req.params;
 
     if (comment === null || comment === undefined || comment === "") {
-      return res.status(404).json({message:"Comment is required",success:false});
+      return res
+        .status(404)
+        .json({ message: "Comment is required", success: false });
     } else {
       const commentInfo = await Comments.findById(id);
 
@@ -308,7 +324,7 @@ const replyComments = async (req, res, next) => {
 
       await commentInfo.save();
 
-      return res.status(200).json({success:true,commentInfo});
+      return res.status(200).json({ success: true, commentInfo });
     }
   } catch (error) {
     console.log(error);
@@ -325,7 +341,9 @@ const deletePost = async (req, res, next) => {
 
     const result = await Posts.findByIdAndDelete(id);
     console.log({ result });
-    return res.status(200).json({ success: true, message: "Successfully deleted" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Successfully deleted" });
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });

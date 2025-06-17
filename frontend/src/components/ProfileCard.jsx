@@ -12,6 +12,7 @@ import moment from 'moment';
 import EditProfile from './EditProfile';
 import { CommonPostUrl } from '../utils/api';
 
+
 const ProfileCard = ({ user }) => {
 
   const { user: data } = useSelector(state => state.user);

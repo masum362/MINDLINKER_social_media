@@ -5,8 +5,6 @@ import { CommonPostUrl } from '../utils/api';
 
 const ResetPassword = () => {
 
-
-
   const [errMsg, setErrMsg] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false);
 
