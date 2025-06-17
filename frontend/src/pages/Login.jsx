@@ -26,8 +26,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
-    try {
-      const result = await CommonPostUrl('auth/login', data)
+    try {      const result = await CommonPostUrl('auth/login', data)
       console.log(result.data);
       setErrMsg({ success: 'success', message: "User login successfully" });
       const newResponse = { token: result.data?.token, ...result.data?.user }

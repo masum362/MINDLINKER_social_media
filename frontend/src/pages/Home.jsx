@@ -28,12 +28,9 @@ const Home = () => {
     },
   });
 
-  console.log(posts);
-  console.log(user, edit)
-
   useEffect(() => {
-    getAllPosts();
     setLoading(true);
+    getAllPosts();
     getFriendRequest();
     getSuggestedFriend();
     getUser();

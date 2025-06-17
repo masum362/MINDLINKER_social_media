@@ -2,18 +2,35 @@ import axios from "axios";
 
 const APP_URL = import.meta.env.VITE_BACKEND_URL;
 
-console.log(APP_URL);
 
-const token = JSON.parse(localStorage.getItem("user"))?.token ?? "";
+const api = axios.create({
+  baseURL: APP_URL,
+});
 
-console.log(token);
+// Request interceptor to add token dynamically
+api.interceptors.request.use(
+  (config) => {
+    // Get token fresh from localStorage on each request
+    const token = JSON.parse(localStorage.getItem("user"))?.token ?? "";
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 
 const CommonPostUrl = async (url, data) => {
   try {
-    const response = await axios.post(`${APP_URL}/${url}`, data, {
+    const response = await api.post(`${url}`, data, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token ? token : ""}`,
+        
       },
     });
 
@@ -27,10 +44,10 @@ const CommonPostUrl = async (url, data) => {
 
 const CommonGetUrl = async (url) => {
   try {
-    const response = await axios.get(`${APP_URL}/${url}`, {
+    const response = await api.get(`${url}`, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token ? token : ""}`,
+        
       },
     });
 
@@ -43,10 +60,10 @@ const CommonGetUrl = async (url) => {
 };
 const CommonPutUrl = async (url, data) => {
   try {
-    const response = await axios.put(`${APP_URL}/${url}`, data, {
+    const response = await api.put(`${url}`, data, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token ? token : ""}`,
+        
       },
     });
 
@@ -60,10 +77,10 @@ const CommonPutUrl = async (url, data) => {
 
 const CommonDeleteUrl = async (url) => {
   try {
-    const response = await axios.delete(`${APP_URL}/${url}`, {
+    const response = await api.delete(`${url}`, {
       headers: {
         // "Content-Type": "application/json",
-        Authorization: `Bearer ${token ? token : ""}`,
+        
       },
     });
 
@@ -77,7 +94,7 @@ const CommonDeleteUrl = async (url) => {
 
 const CommonFileUpload = async (data) => {
   try {
-    const response = await axios.post(
+    const response = await api.post(
       "https://api.imgbb.com/1/upload?expiration=63072000&key=7dfd97eb382b65ec8ec1a88ce98dfab1",
       data
     );
